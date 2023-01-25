@@ -171,8 +171,7 @@ end
 # unzips file as folder into current folder
 function unzip(path::String)
     output = split(path, ".pptx")[begin]
-    standard_output = Pipe() # capture output, so it doesn't pollute the REPL
-    return run(pipeline(`$(exe7z()) x $path -o$output`, stdout=standard_output))
+    run_silent_pipeline(`$(exe7z()) x $path -o$output`)
 end
 
 # Turns folder into zipped file
@@ -181,9 +180,19 @@ function zip(folder::String, filename::String)
     origin = pwd()
     cd(folder)
     for f in readdir(".")
-        standard_output = Pipe() # capture output, so it doesn't pollute the REPL
-        run(pipeline(`$(exe7z()) a $zip_ext_filename $f`, stdout=standard_output))
+        run_silent_pipeline(`$(exe7z()) a $zip_ext_filename $f`)
     end
     mv(zip_ext_filename, joinpath(origin, filename))
     return cd(origin)
+end
+
+# silent, unless we error
+function run_silent_pipeline(command)
+    standard_output = Pipe() # capture output, so it doesn't pollute the REPL
+    try
+        run(pipeline(command, stdout=standard_output))
+    catch e
+        println(standard_output)
+        rethrow(e)
+    end
 end

@@ -19,10 +19,10 @@ jobs:
       matrix:
         version:
           - '1.6'
-          - '1.8'
-          - 'nightly'
+          - '1' # latest released Julia version
         os:
-          - ubuntu-latest
+          - windows-2022
+          - ubuntu-22.04
         arch:
           - x64
     steps:

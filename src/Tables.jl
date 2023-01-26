@@ -1,0 +1,264 @@
+struct Table <: AbstractShape
+    content # anything that adheres to Tables.jl interfaces
+    offset_x::Int # EMUs
+    offset_y::Int # EMUs
+    size_x::Int # EMUs
+    size_y::Int # EMUs
+    style_id::String
+    function Table(
+        content,
+        offset_x::Real, # millimeters
+        offset_y::Real, # millimeters
+        size_x::Real, # millimeters
+        size_y::Real, # millimeters
+        style_id::String="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}",
+    )
+        # input is in mm
+        return new(
+            content,
+            Int(round(offset_x * _EMUS_PER_MM)),
+            Int(round(offset_y * _EMUS_PER_MM)),
+            Int(round(size_x * _EMUS_PER_MM)),
+            Int(round(size_y * _EMUS_PER_MM)),
+            style_id,
+        )
+    end
+end
+
+# keyword argument constructor
+function Table(;
+    content,
+    offset_x::Real=50, # millimeters
+    offset_y::Real=50, # millimeters
+    size_x::Real=150, # millimeters
+    size_y::Real=100, # millimeters
+)
+    return Table(content, offset_x, offset_y, size_x, size_y)
+end
+
+Table(content; kwargs...) = Table(; content=content, kwargs...)
+
+Tables.columnnames(t::Table) = Tables.columnnames(t.content)
+Tables.columns(t::Table) = Tables.columns(t.content)
+Tables.rows(t::Table) = Tables.rows(t.content)
+ncols(t::Table) = length(Tables.columns(t))
+nrows(t::Table) = length(Tables.rows(t))
+
+function make_xml(t::Table, id::Integer)
+    nvGraphicFramePr = make_nvGraphicFramePr(t, id)
+    xfrm = make_xfrm(t)
+    tbl = make_xml_table(t)
+    # a:graphic => a:graphicData => a:tbl
+    uri = Dict("uri"=>"http://schemas.openxmlformats.org/drawingml/2006/table")
+    graphic = Dict("a:graphic" => Dict("a:graphicData" => [uri, tbl]))
+    return Dict("p:graphicFrame" => [nvGraphicFramePr, xfrm, graphic])
+end
+
+#= Example
+<p:nvGraphicFramePr>
+    <p:cNvPr id="4" name="Table 4">
+        <a:extLst>
+            <a:ext uri="{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}">
+                <a16:creationId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" id="{FBDC5980-B3C0-4562-ADB2-48A8BBF2EFB1}"/>
+            </a:ext>
+        </a:extLst>
+    </p:cNvPr>
+    <p:cNvGraphicFramePr>
+        <a:graphicFrameLocks noGrp="1"/>
+    </p:cNvGraphicFramePr>
+    <p:nvPr>
+        <p:ph idx="1"/>
+        <p:extLst>
+            <p:ext uri="{D42A27DB-BD31-4B8C-83A1-F6EECF244321}">
+                <p14:modId xmlns:p14="http://schemas.microsoft.com/office/powerpoint/2010/main" val="166699280"/>
+            </p:ext>
+        </p:extLst>
+    </p:nvPr>
+</p:nvGraphicFramePr>
+=#
+function make_nvGraphicFramePr(t::Table, id::Integer)
+    cNvPrExtLst = Dict(
+        "a:extLst" => [
+            Dict(
+                "a:ext" => [
+                    Dict("uri" => "{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}"),
+                    Dict(
+                        "a16:creationId" => [
+                            "xmlns:a16" => "http://schemas.microsoft.com/office/drawing/2014/main",
+                            "id" => "{FBDC5980-B3C0-4562-ADB2-48A8BBF2EFB1}",
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    cNvPr = Dict(
+        "p:cNvPr" => [Dict("id" => "$id"), Dict("name" => "Table $id"), cNvPrExtLst]
+    )
+
+    cNvGraphicFramePr = Dict(
+        "p:cNvGraphicFramePr" => Dict("a:graphicFrameLocks" => Dict("noGrp" => "1"))
+    )
+
+    nvPrextLst = Dict(
+        "p:extLst" => [
+            Dict(
+                "p:ext" => [
+                    Dict("uri" => "{D42A27DB-BD31-4B8C-83A1-F6EECF244321}"),
+                    Dict(
+                        "p14:modId" => [
+                            "xmlns:p14" => "http://schemas.microsoft.com/office/powerpoint/2010/main",
+                            "val" => "166699280", # does this need to be unique? hardcoding for now
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    nvPr = Dict("p:nvPr" => [Dict("p:ph" => Dict("idx" => "1")), nvPrextLst])
+
+    nvGraphicFramePr = Dict("p:nvGraphicFramePr" => [cNvPr, cNvGraphicFramePr, nvPr])
+
+    return nvGraphicFramePr
+end
+
+#= Example
+<p:xfrm>
+    <a:off x="838200" y="2635522"/>
+    <a:ext cx="10515597" cy="2225040"/>
+</p:xfrm>
+=#
+function make_xfrm(t::Table)
+    offset = Dict("a:off" => [Dict("x" => "$(t.offset_x)"), Dict("y" => "$(t.offset_y)")])
+    extend = Dict("a:ext" => [Dict("cx" => "$(t.size_x)"), Dict("cy" => "$(t.size_y)")])
+    return Dict("p:xfrm" => [offset, extend])
+end
+
+#= Example 'skeleton' of the XML
+<a:tbl>
+    <a:tblPr>...</a:tblPr>
+    <a:tblGrid>...</a:tblGrid>
+    <a:tr>...</a:tr>
+    ...
+    <a:tr>...</a:tr>
+</a:tbl>
+=#
+function make_xml_table(t::Table)
+    tblPr = make_tblPr(t)
+    tblGrid = make_tblGrid(t)
+    return Dict("a:tbl" => [tblPr, tblGrid, make_rows(t)...])
+end
+
+#= Example
+<a:tblPr firstRow="1" bandRow="1">
+    <a:tableStyleId>{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}</a:tableStyleId>
+</a:tblPr>
+=#
+function make_tblPr(t::Table)
+    tblPr = Dict(
+        "a:tblPr" => [
+            Dict("firstRow" => "1"),
+            Dict("bandRow" => "1"),
+            Dict("a:tableStyleId" => PlainTextBody(t.style_id)),
+        ],
+    )
+    return tblPr
+end
+
+#= tblGrid has a gridCol per column
+<a:tblGrid>
+    <a:gridCol w="3505199">
+        <a:extLst>...</a:extLst>
+    </a:gridCol>
+    ...
+</a:tblGrid>
+=#
+function make_tblGrid(t::Table)
+    nr_of_columns = ncols(t)
+    column_width = t.size_x ÷ nr_of_columns
+    return Dict("a:tblGrid" => [make_gridCol(column_width) for _ in 1:nr_of_columns])
+end
+
+#= Example
+<a:gridCol w="3505199">
+    <a:extLst>
+        <a:ext uri="{9D8B030D-6E8A-4147-A177-3AD203B41FA5}">
+            <a16:colId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" val="4181689228"/>
+        </a:ext>
+    </a:extLst>
+</a:gridCol>
+=#
+function make_gridCol(width::Integer)
+    extLst = make_single_val_extLst("{9D8B030D-6E8A-4147-A177-3AD203B41FA5}", "colId")
+    return Dict(
+        "a:gridCol" => [
+            Dict("w" => "$width"),
+            extLst
+        ]
+    )
+end
+
+#=
+<a:tr h="370840"><a:tc><a:txBody>...</a:txBody></a:tc><a:tr>
+...
+<a:tr h="370840"><a:tc><a:txBody>...</a:txBody></a:tc><a:tr>
+=#
+function make_rows(t::Table)::Vector
+    tr_list = []
+
+    nr_of_rows = nrows(t) + 1
+    height = t.size_y ÷ nr_of_rows
+
+    # we also push the column names as a row
+    push!(tr_list, make_xml_row(Tables.columnnames(t), height))
+
+    for row in Tables.rows(t)
+        push!(tr_list, make_xml_row(row, height))
+    end
+    return tr_list
+end
+
+#=
+<a:tr h="370840">
+    <a:tc><a:txBody>...</a:txBody><a:tcPr/></a:tc>
+    ...
+    <a:tc><a:txBody>...</a:txBody><a:tcPr/></a:tc>
+    <a:extLst>
+        <a:ext uri="{0D108BD9-81ED-4DB2-BD59-A6C34878D82A}">
+            <a16:rowId xmlns:a16="http://schemas.microsoft.com/office/drawing/2014/main" val="102079860"/>
+        </a:ext>
+    </a:extLst>
+</a:tr>
+=#
+function make_xml_row(row, height::Integer)
+    tc_list = []
+    for element in row
+        text = PlainTextBody(string(element))
+        tc_properties = Dict("a:tcPr" => missing)
+        tc = Dict("a:tc" => [make_textbody_xml(text, "a"), tc_properties])
+        push!(tc_list, tc)
+    end
+    extLst = make_single_val_extLst("{0D108BD9-81ED-4DB2-BD59-A6C34878D82A}", "rowId")
+    tr = Dict("a:tr" => [Dict("h" => "$height"), tc_list..., extLst])
+    return tr
+end
+
+function make_single_val_extLst(uri::String, type::String, val::Integer = rand(UInt32))
+    return Dict(
+        "a:extLst" => [
+            Dict(
+                "a:ext" => [
+                    Dict("uri" => uri),
+                    Dict(
+                        "a16:$type" => [
+                            "xmlns:a16" => "http://schemas.microsoft.com/office/drawing/2014/main",
+                            "val" => "$val",
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+end

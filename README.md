@@ -3,7 +3,7 @@
 [![Build Status](https://github.com/ASML-Labs/PPTX.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/ASML-Labs/PPTX.jl/actions/workflows/CI.yml?query=branch%3Amain)
 [![Coverage](https://codecov.io/gh/ASML-Labs/PPTX.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ASML-Labs/PPTX.jl)
 [![Code Style: Blue](https://img.shields.io/badge/code%20style-blue-4495d1.svg)](https://github.com/invenia/BlueStyle)
-
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://ASML-Labs/PPTX.jl/dev)
 
 Package to generate PowerPoint© .pptx files.
 

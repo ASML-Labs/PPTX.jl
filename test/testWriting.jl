@@ -24,6 +24,18 @@ end
 @testset "zipping/unzipping" begin
     origin = @__DIR__
 
+    # simple zip/unzip test
+    mktempdir() do tmpdir
+        cd(tmpdir)
+        a_folder = abspath(joinpath(PPTX.TEMPLATE_DIR,"no-slides"))
+        cp(a_folder, abspath(joinpath(".","no-slides")))
+        PPTX.zip("no-slides", "zipfile.pptx")
+        @test isfile("zipfile.pptx")
+        PPTX.unzip("zipfile.pptx")
+        @test isdir("zipfile")
+        cd(origin)
+    end
+
     no_slides_template = abspath(joinpath(PPTX.TEMPLATE_DIR,"no-slides.pptx"))
     mktempdir() do tmpdir
         cd(tmpdir)

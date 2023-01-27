@@ -13,6 +13,7 @@ Tables = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
 XMLDict = "228000da-037f-5747-90a9-8195ccbf91a5"
 
 [compat]
+Tables = "1"
 julia = "1.6"
 
 [extras]

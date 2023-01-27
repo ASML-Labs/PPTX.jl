@@ -10,7 +10,13 @@ using Test
         @test String(box.content) == "content"
         @test box.size_y == Int(round(80*PPTX._EMUS_PER_MM))
         @test String(box.content) == "content"
-        @test contains(PPTX._show_string(box, false), "content is \"content\"")
+
+        @test sprint(show, box) == "TextBox"
+
+        io = IOBuffer()
+        Base.show(io, MIME"text/plain"(), box)
+        show_string = String(take!(io))
+        @test contains(show_string, "content is \"$(String(box.content))\"")
     end
     @testset "Picture" begin
         @test_throws ArgumentError pic = Picture("path")
@@ -53,6 +59,20 @@ using Test
         p = Presentation([Slide([TextBox(),Picture(picture_path)])])
         @test rid(p.slides[1].shapes[1]) == 0
         @test rid(p.slides[1].shapes[2]) == 1
+    end
+    @testset "Slide" begin
+        slide = Slide()
+        picture_path = joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg")
+        push!(slide, Picture(picture_path))
+    end
+end
+
+@testset "show AbstractShape" begin
+    struct Something <: PPTX.AbstractShape end
+    @test sprint(show, Something()) == "Something"
+
+    @testset "Presentation" begin
+        p = Presentation()
 
         @test sprint(show, p) == "Presentation with 1 slide"
 
@@ -60,10 +80,8 @@ using Test
         Base.show(io, MIME"text/plain"(), p)
         show_string = String(take!(io))
         @test contains(show_string, "title is \"$(p.title)\"")
-    end
-    @testset "Slide" begin
-        slide = Slide()
-        picture_path = joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg")
-        push!(slide, Picture(picture_path))
+
+        push!(p, Slide())
+        @test sprint(show, p) == "Presentation with 2 slides"
     end
 end

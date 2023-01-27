@@ -165,11 +165,6 @@ function Base.write(
 end
 
 # unzips file as folder into current folder
-# function unzip(path::String)
-#     output = split(path, ".pptx")[begin]
-#     run_silent_pipeline(`$(exe7z()) x $path -o$output`)
-# end
-
 function unzip(path::String)
     output = first(split(path, ".pptx"))
     fullpath = isabspath(path) ? path : joinpath(pwd(), path)

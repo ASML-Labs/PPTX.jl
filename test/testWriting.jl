@@ -35,66 +35,49 @@ end
         @test isdir("zipfile")
         cd(origin)
     end
+end
 
-    no_slides_template = abspath(joinpath(PPTX.TEMPLATE_DIR,"no-slides.pptx"))
-    mktempdir() do tmpdir
-        cd(tmpdir)
-        cp(no_slides_template, abspath(joinpath(".","no-slides-cp.pptx")))
-        PPTX.unzip("no-slides-cp.pptx")
-        dir_contents = readdir("no-slides-cp")
-        @test "[Content_Types].xml" ∈ dir_contents
-        @test "_rels" ∈ dir_contents
-        @test "docProps" ∈ dir_contents
-        @test "ppt" ∈ dir_contents
-        cd(origin)
+@testset "writing" begin
+    @testset "push same picture" begin
+        picture_path = joinpath(PPTX.EXAMPLE_DIR, "pictures", "cauliflower.jpg")
+        p = Presentation([Slide([Picture(picture_path)]), Slide([Picture(picture_path)])])
+        @test write_and_remove("test.pptx", p)
     end
 
-    target = abspath(joinpath(PPTX.TESTDATA_DIR,"rezipped.pptx"))
-    if isfile(target)
-        rm(target)
+    @testset "pushing same picture twice" begin
+        pres = Presentation()
+        s1 = Slide()
+        julia_logo = Picture(joinpath(PPTX.EXAMPLE_DIR,"pictures/julia_logo.png"), top = 110, left = 110)
+        push!(s1, julia_logo)
+        push!(pres, s1)
+        s2 = Slide()
+        push!(s2, julia_logo)
+        push!(pres, s2)
+
+        @test write_and_remove("test.pptx", pres)
     end
-    mktempdir() do tmpdir
-        cd(tmpdir)
-        cp(no_slides_template, abspath(joinpath(".","no-slides.pptx")))
-        PPTX.unzip("no-slides.pptx")
-        PPTX.zip("no-slides","rezipped.pptx")
-        # cp("rezipped.pptx", target)
-        cd(origin)
-    end
-    # @test bincompare(no_slides_template, target)
-
-    @testset "special cases" begin
-        @testset "push same picture" begin
-            picture_path = joinpath(PPTX.EXAMPLE_DIR, "pictures", "cauliflower.jpg")
-            p = Presentation([Slide([Picture(picture_path)]), Slide([Picture(picture_path)])])
-            @test write_and_remove("test.pptx", p)
-        end
-
-        @testset "pushing same picture twice" begin
-            pres = Presentation()
-            s1 = Slide()
-            julia_logo = Picture(joinpath(PPTX.EXAMPLE_DIR,"pictures/julia_logo.png"), top = 110, left = 110)
-            push!(s1, julia_logo)
-            push!(pres, s1)
-            s2 = Slide()
-            push!(s2, julia_logo)
-            push!(pres, s2)
-
-            @test write_and_remove("test.pptx", pres)
-
-        end
-    end
-
 end
 
 # TODO: also support .potx next to empty .pptx
 # TODO: what if the .pptx template already has slides?
 @testset "custom template" begin
-    dark_template_name = "no-slides-dark.pptx"
+    dark_template_name = "no-slides-dark"
     dark_template_path = joinpath(PPTX.TEMPLATE_DIR, dark_template_name)
     pres = Presentation(;title="My Presentation")
     s = Slide()
     push!(pres, s)
+
+    # error testing
+    wrong_path = abspath(joinpath(".", "wrong_path"))
+    err_msg = "No file found at template path: $wrong_path"
+    @test_throws ErrorException(err_msg) PPTX.write(
+        "anywhere.pptx",
+        pres;
+        overwrite=true,
+        open_ppt=false,
+        template_path=wrong_path,
+    )
+
     mktempdir() do tmpdir
         filename = "testfile-dark"
         output_pptx = abspath(joinpath(tmpdir, "$filename.pptx"))

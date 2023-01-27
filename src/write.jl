@@ -182,10 +182,8 @@ function unzip(path::String)
             fullfilepath = joinpath(outputpath, f.name)
             if (endswith(f.name, "/") || endswith(f.name, "\\"))
                 mkdir(fullfilepath)
-            elseif !isdir(dirname(fullfilepath))
-                mkpath(dirname(fullfilepath))
-                write(fullfilepath, read(f))
             else
+                isdir(dirname(fullfilepath)) || mkpath(dirname(fullfilepath))
                 write(fullfilepath, read(f))
             end
         end

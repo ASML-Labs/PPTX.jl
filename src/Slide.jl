@@ -20,16 +20,21 @@ You can `push!` any `AbstractShape` types into this slide, such as a `TextBox` o
 julia> using PPTX
 
 julia> slide = Slide(; title="Hello Title", layout=2)
+Slide("Hello Title", PPTX.AbstractShape[], 0, 2)
 
 julia> text = TextBox("Hello world!")
+TextBox
+ content is "Hello world!"
+ offset_x is 1800000 EMUs
+ offset_y is 1800000 EMUs
+ size_x is 1440000 EMUs
+ size_y is 1080000 EMUs
 
-julia> push!(slide, text)
+julia> push!(slide, text);
 
-julia> pres = Presentation()
+julia> slide
+Slide("Hello Title", PPTX.AbstractShape[TextBox], 0, 2)
 
-julia> push!(pres, slide)
-
-julia> write("hello_world.pptx", pres)
 ```
 """
 mutable struct Slide

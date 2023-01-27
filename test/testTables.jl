@@ -6,6 +6,8 @@ using EzXML
 @testset "PPTX Tables from a DataFrame" begin
     df = DataFrame(a = [1,2], b = [3,4], c = [5,6])
     t = Table(df; offset_x=50, offset_y=50, size_x=200, size_y=150)
+    contains(PPTX._show_string(t, false), "content isa DataFrame")
+
     @test t.content === df
     @test t.size_x == 200*PPTX._EMUS_PER_MM
 

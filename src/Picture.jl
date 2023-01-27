@@ -9,21 +9,20 @@ Picture(source::String; top::Int=0, left::Int=0, size::Int = 40)
 * `top::Int` mm from the top
 * `left::Int` mm from the left
 
+Internally the sizes are converted EMUs.
+
 # Examples
 ```julia
 julia> using PPTX
 
-julia> img = Picture(joinpath(PPTX.EXAMPLE_DIR, "pictures/cauliflower.jpg"))
+julia> img = Picture(joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg"))
+Picture
+ source is "./cauliflower.jpg"
+ offset_x is 0 EMUs
+ offset_y is 0 EMUs
+ size_x is 1440000 EMUs
+ size_y is 1475072 EMUs
 
-julia> slide = Slide()
-
-julia> push!(slide, img)
-
-julia> pres = Presentation()
-
-julia> push!(pres, slide)
-
-julia> write("cauliflower.pptx", pres)
 ```
 """
 struct Picture <: AbstractShape
@@ -52,6 +51,18 @@ end
 set_rid(s::Picture, i::Int) = Picture(s.source, s.offset_x, s.offset_y, s.size_x, s.size_y, i)
 rid(s::Picture) = s.rid
 has_rid(s::Picture) = true
+
+function _show_string(p::Picture, compact::Bool)
+    show_string = "Picture"
+    if !compact
+        show_string *= "\n source is \"$(p.source)\""
+        show_string *= "\n offset_x is $(p.offset_x) EMUs"
+        show_string *= "\n offset_y is $(p.offset_y) EMUs"
+        show_string *= "\n size_x is $(p.size_x) EMUs"
+        show_string *= "\n size_y is $(p.size_y) EMUs"
+    end
+    return show_string
+end
 
 function make_xml(shape::Picture, id::Int)
     cNvPr = Dict("p:cNvPr" => [Dict("id" => "$id"), Dict("name" => "Picture")])

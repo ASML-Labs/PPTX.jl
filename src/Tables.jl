@@ -1,3 +1,42 @@
+"""
+```julia
+Table(;
+    content,
+    offset_x::Real = 50,
+    offset_y::Real = 50,
+    size_x::Real = 150,
+    size_y::Real = 100,
+)
+```
+
+A Table to be used on a Slide.
+
+The content can be anything that adheres to a `Tables.jl` interface.
+
+Offsets and sizes are in millimeters, but will be converted to EMU.
+
+# Examples
+```jldoctest
+julia> using PPTX, DataFrames
+
+julia> df = DataFrame(a = [1,2], b = [3,4], c = [5,6])
+2×3 DataFrame
+ Row │ a      b      c     
+     │ Int64  Int64  Int64 
+─────┼─────────────────────
+   1 │     1      3      5
+   2 │     2      4      6
+
+julia> t = Table(content=df, size_x=30)
+Table
+ content isa DataFrame
+ offset_x is 1800000 EMUs
+ offset_y is 1800000 EMUs
+ size_x is 1080000 EMUs
+ size_y is 3600000 EMUs
+
+```
+"""
 struct Table <: AbstractShape
     content # anything that adheres to Tables.jl interfaces
     offset_x::Int # EMUs
@@ -43,6 +82,18 @@ Tables.columns(t::Table) = Tables.columns(t.content)
 Tables.rows(t::Table) = Tables.rows(t.content)
 ncols(t::Table) = length(Tables.columns(t))
 nrows(t::Table) = length(Tables.rows(t))
+
+function _show_string(t::Table, compact::Bool)
+    show_string = "Table"
+    if !compact
+        show_string *= "\n content isa $(typeof(t.content))"
+        show_string *= "\n offset_x is $(t.offset_x) EMUs"
+        show_string *= "\n offset_y is $(t.offset_y) EMUs"
+        show_string *= "\n size_x is $(t.size_x) EMUs"
+        show_string *= "\n size_y is $(t.size_y) EMUs"
+    end
+    return show_string
+end
 
 function make_xml(t::Table, id::Integer)
     nvGraphicFramePr = make_nvGraphicFramePr(t, id)

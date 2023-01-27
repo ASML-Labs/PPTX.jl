@@ -104,8 +104,19 @@ function Base.write(
     p::Presentation;
     overwrite::Bool=false,
     open_ppt::Bool=true,
-    template_path::String=joinpath(TEMPLATE_DIR, "no-slides.pptx"),
+    template_path::String=joinpath(TEMPLATE_DIR, "no-slides"),
 )
+
+    template_path = abspath(template_path)
+    template_name = splitpath(template_path)[end]
+    template_isdir = isdir(template_path)
+    template_isfile = isfile(template_path)
+
+    if !template_isdir && !template_isfile
+        error(
+            "No file found at template path: $template_path",
+        )
+    end
 
     if !endswith(filepath, ".pptx")
         filepath *= ".pptx"
@@ -114,17 +125,8 @@ function Base.write(
     filepath = abspath(filepath)
     filedir, filename = splitdir(filepath)
 
-    template_path = abspath(template_path)
-    template_dir, template_name = splitdir(template_path)
-
     if !isdir(filedir)
         mkdir(filedir)
-    end
-
-    if !isfile(template_path)
-        error(
-            "No file found at template path: \"$template_path\"",
-        )
     end
 
     if isfile(filepath)
@@ -142,8 +144,11 @@ function Base.write(
         mktempdir() do tmpdir
             cd(tmpdir)
             cp(template_path, template_name)
-            unzip(template_name)
-            unzipped_dir = splitext(template_name)[1]
+            unzipped_dir = template_name
+            if template_isfile
+                unzip(template_name)
+                unzipped_dir = first(splitext(template_name)) # remove .pptx
+            end
             ppt_dir = joinpath(unzipped_dir, "ppt")
             cd(ppt_dir)
             write_relationships!(p)

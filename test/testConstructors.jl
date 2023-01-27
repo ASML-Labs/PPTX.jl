@@ -69,7 +69,13 @@ end
 
 @testset "show AbstractShape" begin
     struct Something <: PPTX.AbstractShape end
-    @test sprint(show, Something()) == "Something"
+    s = Something()
+    @test PPTX.has_rid(s) == false
+    PPTX.set_rid!(s, 2) # this does nothing
+    @test PPTX.rid(s) == 0
+
+    # default show
+    @test sprint(show, s) == "Something"
 
     @testset "Presentation" begin
         p = Presentation()

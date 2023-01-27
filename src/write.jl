@@ -1,13 +1,13 @@
 
 function write_presentation!(p::Presentation)
-    rm("./presentation.xml")
+    isfile("./presentation.xml") && rm("./presentation.xml")
     xml = make_presentation(p)
     doc = xml_document(xml)
     return write("./presentation.xml", doc)
 end
 
 function write_relationships!(p::Presentation)
-    rm("./_rels/presentation.xml.rels")
+    isfile("./_rels/presentation.xml.rels") && rm("./_rels/presentation.xml.rels")
     xml = make_relationships(p)
     doc = xml_document(xml)
     return write("./_rels/presentation.xml.rels", doc)
@@ -36,7 +36,7 @@ function add_title_shape!(doc::EzXML.Document, slide::Slide, unzipped_ppt_dir::S
     title_shape_node = PPTX.get_title_shape_node(slide, unzipped_ppt_dir)
     if !isnothing(title_shape_node)
         PPTX.update_xml_title!(title_shape_node, slide.title)
-        new_id = maximum(get_shape_ids(doc))+1
+        new_id = maximum(get_shape_ids(doc)) + 1
         update_shape_id!(title_shape_node, new_id)
         unlink!(title_shape_node)
         link!(spTree, title_shape_node)
@@ -106,16 +106,13 @@ function Base.write(
     open_ppt::Bool=true,
     template_path::String=joinpath(TEMPLATE_DIR, "no-slides"),
 )
-
     template_path = abspath(template_path)
     template_name = splitpath(template_path)[end]
     template_isdir = isdir(template_path)
     template_isfile = isfile(template_path)
 
     if !template_isdir && !template_isfile
-        error(
-            "No file found at template path: $template_path",
-        )
+        error("No file found at template path: $template_path")
     end
 
     if !endswith(filepath, ".pptx")
@@ -125,9 +122,7 @@ function Base.write(
     filepath = abspath(filepath)
     filedir, filename = splitdir(filepath)
 
-    if !isdir(filedir)
-        mkdir(filedir)
-    end
+    isdir(filedir) || mkdir(filedir)
 
     if isfile(filepath)
         if overwrite
@@ -139,10 +134,9 @@ function Base.write(
         end
     end
 
-    origin = pwd()
     try
-        mktempdir() do tmpdir
-            cd(tmpdir)
+        tmpdir = mktempdir()
+        cd(tmpdir) do
             cp(template_path, template_name)
             unzipped_dir = template_name
             if template_isfile
@@ -150,22 +144,19 @@ function Base.write(
                 unzipped_dir = first(splitext(template_name)) # remove .pptx
             end
             ppt_dir = joinpath(unzipped_dir, "ppt")
-            cd(ppt_dir)
-            write_relationships!(p)
-            write_presentation!(p)
-            write_slides!(p)
-            write_shapes!(p)
-            update_table_style!()
-            cd(tmpdir)
+            cd(ppt_dir) do
+                write_relationships!(p)
+                write_presentation!(p)
+                write_slides!(p)
+                write_shapes!(p)
+                update_table_style!()
+            end
             zip(unzipped_dir, filename)
             cp(filename, filepath)
             # need to cd out of folder, else mktempdir cannot cleanup
-            cd(origin)
         end
     catch e
         rethrow(e)
-    finally
-        cd(origin)
     end
     if open_ppt
         run(`cmd /C start powerpnt.exe /C $filepath`)
@@ -174,9 +165,31 @@ function Base.write(
 end
 
 # unzips file as folder into current folder
+# function unzip(path::String)
+#     output = split(path, ".pptx")[begin]
+#     run_silent_pipeline(`$(exe7z()) x $path -o$output`)
+# end
+
 function unzip(path::String)
-    output = split(path, ".pptx")[begin]
-    run_silent_pipeline(`$(exe7z()) x $path -o$output`)
+    output = first(split(path, ".pptx"))
+    fullpath = isabspath(path) ? path : joinpath(pwd(), path)
+    outputpath = isabspath(output) ? output : joinpath(pwd(), output)
+    isdir(outputpath) || mkdir(outputpath)
+
+    open(fullpath) do io
+        zip_content = ZipFile.Reader(io)
+        for f in zip_content.files
+            fullfilepath = joinpath(outputpath, f.name)
+            if (endswith(f.name, "/") || endswith(f.name, "\\"))
+                mkdir(fullfilepath)
+            elseif !isdir(dirname(fullfilepath))
+                mkpath(dirname(fullfilepath))
+                write(fullfilepath, read(f))
+            else
+                write(fullfilepath, read(f))
+            end
+        end
+    end
 end
 
 # Turns folder into zipped file
@@ -195,7 +208,7 @@ end
 function run_silent_pipeline(command)
     standard_output = Pipe() # capture output, so it doesn't pollute the REPL
     try
-        run(pipeline(command, stdout=standard_output))
+        run(pipeline(command; stdout=standard_output))
     catch e
         println(standard_output)
         rethrow(e)

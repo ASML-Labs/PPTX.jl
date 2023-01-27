@@ -9,12 +9,12 @@ using Test
         box = TextBox("content"; size_y = 80)
         @test String(box.content) == "content"
         @test box.size_y == Int(round(80*PPTX._EMUS_PER_MM))
-        box = TextBox(content="content", size_y = 80)
         @test String(box.content) == "content"
+        @test contains(PPTX._show_string(box, false), "content is \"content\"")
     end
     @testset "Picture" begin
         @test_throws ArgumentError pic = Picture("path")
-        logo_path = joinpath(PPTX.EXAMPLE_DIR,"pictures/julia_logo.png")
+        logo_path = joinpath(PPTX.ASSETS_DIR,"julia_logo.png")
         pic = Picture(logo_path)
         @test pic.offset_x == 0
         width = 150
@@ -34,6 +34,8 @@ using Test
         @test pic2.offset_y == pic.offset_y
         @test pic2.size_x == pic.size_x
         @test pic2.size_y == pic.size_y
+
+        contains(PPTX._show_string(pic2, false), "source is \"$(pic.source)\"")
     end
     @testset "empty" begin
         p = Presentation()
@@ -45,16 +47,23 @@ using Test
         @test isempty(shapes(s))
     end
     @testset "first slide" begin
-        p = Presentation([Slide()])
+        p = Presentation()
         @test rid(p.slides[1]) == 6
-        picture_path = joinpath(PPTX.EXAMPLE_DIR, "pictures", "cauliflower.jpg")
+        picture_path = joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg")
         p = Presentation([Slide([TextBox(),Picture(picture_path)])])
         @test rid(p.slides[1].shapes[1]) == 0
         @test rid(p.slides[1].shapes[2]) == 1
+
+        @test sprint(show, p) == "Presentation with 1 slide"
+
+        io = IOBuffer()
+        Base.show(io, MIME"text/plain"(), p)
+        show_string = String(take!(io))
+        @test contains(show_string, "title is \"$(p.title)\"")
     end
     @testset "Slide" begin
         slide = Slide()
-        picture_path = joinpath(PPTX.EXAMPLE_DIR, "pictures", "cauliflower.jpg")
+        picture_path = joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg")
         push!(slide, Picture(picture_path))
     end
 end

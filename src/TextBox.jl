@@ -44,20 +44,17 @@ A TextBox to be used on a Slide.
 Offsets and sizes are in millimeters, but will be converted to EMU.
 
 # Examples
-```julia
+```jldoctest
 julia> using PPTX
 
-julia> text = TextBox(content="Hello world!")
+julia> text = TextBox(content="Hello world!", size_x=30)
+TextBox
+ content is "Hello world!"
+ offset_x is 1800000 EMUs
+ offset_y is 1800000 EMUs
+ size_x is 1080000 EMUs
+ size_y is 1080000 EMUs
 
-julia> slide = Slide()
-
-julia> push!(slide, text)
-
-julia> pres = Presentation()
-
-julia> push!(pres, slide)
-
-julia> write("hello_world.pptx", pres)
 ```
 """
 struct TextBox <: AbstractShape
@@ -105,6 +102,18 @@ function TextBox(;
 end
 
 TextBox(content::String; kwargs...) = TextBox(;content=content, kwargs...)
+
+function _show_string(p::TextBox, compact::Bool)
+    show_string = "TextBox"
+    if !compact
+        show_string *= "\n content is \"$(String(p.content))\""
+        show_string *= "\n offset_x is $(p.offset_x) EMUs"
+        show_string *= "\n offset_y is $(p.offset_y) EMUs"
+        show_string *= "\n size_x is $(p.size_x) EMUs"
+        show_string *= "\n size_y is $(p.size_y) EMUs"
+    end
+    return show_string
+end
 
 function text_style_xml(t::TextBody)
     style = [Dict("lang" => "en-US")]

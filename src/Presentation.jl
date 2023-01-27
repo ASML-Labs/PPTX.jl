@@ -13,32 +13,24 @@ Type to contain the final presentation you want to write to .pptx.
 If `isempty(slides)` then we add a first slide with the Title slide layout.
 
 # Examples
-```julia
+```jldoctest
 julia> using PPTX
 
 julia> pres = Presentation(; title = "My Presentation")
+Presentation with 1 slide
+ title is "My Presentation"
+ author is "unknown"
 
-julia> slide = Slide()
-
-julia> text = TextBox("Hello world!")
-
-julia> push!(slide, text)
-
-julia> push!(pres, slide)
-
-julia> write("hello_world.pptx", pres)
 ```
 """
 struct Presentation
     title::String
     author::String
     slides::Vector{Slide}
-    function Presentation(
-        slides::Vector{Slide}, author::String, title::String,
-    )
+    function Presentation(slides::Vector{Slide}, author::String, title::String)
         pres = new(title, author, Slide[])
         if isempty(slides)
-            slides = [Slide(;title=title, layout=TITLE_SLIDE_LAYOUT)]
+            slides = [Slide(; title=title, layout=TITLE_SLIDE_LAYOUT)]
         end
         for slide in slides
             push!(pres, slide)
@@ -50,9 +42,7 @@ slides(p::Presentation) = p.slides
 
 # keyword argument constructor
 function Presentation(
-    slides::Vector{Slide}=Slide[];
-    title::String="unknown",
-    author::String="unknown",
+    slides::Vector{Slide}=Slide[]; title::String="unknown", author::String="unknown"
 )
     return Presentation(slides, author, title)
 end
@@ -68,6 +58,34 @@ end
 function Base.push!(pres::Presentation, slide::Slide)
     slide.rid = new_rid(pres)
     return push!(slides(pres), slide)
+end
+
+# default show used by Array show
+function Base.show(io::IO, p::Presentation)
+    compact = get(io, :compact, true)
+    return print(io, _show_string(p, compact))
+end
+
+# default show used by display() on the REPL
+function Base.show(io::IO, mime::MIME"text/plain", p::Presentation)
+    compact = get(io, :compact, false)
+    return print(io, _show_string(p, compact))
+end
+
+function _show_string(p::Presentation, compact::Bool)
+    show_string = ""
+    nslides = length(p.slides)
+    if nslides == 1
+        slide_string = "slide"
+    else
+        slide_string = "slides"
+    end
+    show_string *= "Presentation with $(nslides) $slide_string"
+    if !compact
+        show_string *= "\n title is \"$(p.title)\""
+        show_string *= "\n author is \"$(p.author)\""
+    end
+    return show_string
 end
 
 function make_relationships(p::Presentation)::AbstractDict

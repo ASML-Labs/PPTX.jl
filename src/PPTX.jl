@@ -1,12 +1,3 @@
-
-"""
-Interface functions:
-* `Presentation`: Presentation constructor, used for making a presentation.
-* `Slide`: Slide constructor, used for making a slide.
-* `TextBox`: TextBox constructor, used for adding text to slides.
-* `Picture`: Picture constructor, used for adding pictures to slides.
-* `write`: write a presentation to a file.
-"""
 module PPTX
 
 using XMLDict

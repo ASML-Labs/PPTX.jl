@@ -39,7 +39,7 @@ end
 
 @testset "writing" begin
     @testset "push same picture" begin
-        picture_path = joinpath(PPTX.EXAMPLE_DIR, "pictures", "cauliflower.jpg")
+        picture_path = joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg")
         p = Presentation([Slide([Picture(picture_path)]), Slide([Picture(picture_path)])])
         @test write_and_remove("test.pptx", p)
     end
@@ -47,7 +47,7 @@ end
     @testset "pushing same picture twice" begin
         pres = Presentation()
         s1 = Slide()
-        julia_logo = Picture(joinpath(PPTX.EXAMPLE_DIR,"pictures/julia_logo.png"), top = 110, left = 110)
+        julia_logo = Picture(joinpath(PPTX.ASSETS_DIR,"julia_logo.png"), top = 110, left = 110)
         push!(s1, julia_logo)
         push!(pres, s1)
         s2 = Slide()

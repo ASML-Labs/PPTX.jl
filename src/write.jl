@@ -173,7 +173,7 @@ function Base.write(
         elseif Sys.isapple()
             run(`open $filepath`)
         else
-            warn("Open .pptx files not implemented on your OS")
+            @warn "Open .pptx files not implemented on your OS"
         end
     end
     return nothing

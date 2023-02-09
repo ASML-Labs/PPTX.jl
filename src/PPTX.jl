@@ -2,6 +2,7 @@ module PPTX
 
 using XMLDict
 using EzXML
+using ZipFile
 using DataStructures
 
 import Tables

@@ -168,12 +168,18 @@ function Base.write(
         cd(origin)
     end
     if open_ppt
-        if Sys.iswindows()
-            run(`cmd /C start powerpnt.exe /C $filepath`)
-        elseif Sys.isapple()
-            run(`open $filepath`)
-        else
-            @warn "Open .pptx files not implemented on your OS"
+        try
+            if Sys.iswindows()
+                run(`cmd /C start powerpnt.exe /C $filepath`)
+            elseif Sys.isapple()
+                run(`open $filepath`)
+            else
+                run(`xdg-open $filepath`)
+            end
+        catch err
+            @warn "Could not open file $filepath"
+            bt = backtrace()
+            print(sprint(showerror, err, bt))
         end
     end
     return nothing

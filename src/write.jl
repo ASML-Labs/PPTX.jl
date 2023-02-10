@@ -45,7 +45,9 @@ function add_title_shape!(doc::EzXML.Document, slide::Slide, unzipped_ppt_dir::S
 end
 
 function write_shapes!(pres::Presentation)
-    mkdir("media")
+    if !isdir("media")
+        mkdir("media")
+    end
     for slide in slides(pres)
         for shape in shapes(slide)
             if shape isa Picture

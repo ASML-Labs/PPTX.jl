@@ -22,18 +22,17 @@ function write_and_remove(fname::String, p::Presentation)
 end
 
 @testset "zipping/unzipping" begin
-    origin = @__DIR__
 
     # simple zip/unzip test
     mktempdir() do tmpdir
-        cd(tmpdir)
-        a_folder = abspath(joinpath(PPTX.TEMPLATE_DIR,"no-slides"))
-        cp(a_folder, abspath(joinpath(".","no-slides")))
-        PPTX.zip("no-slides", "zipfile.pptx")
-        @test isfile("zipfile.pptx")
-        PPTX.unzip("zipfile.pptx")
-        @test isdir("zipfile")
-        cd(origin)
+        cd(tmpdir) do
+            a_folder = abspath(joinpath(PPTX.TEMPLATE_DIR,"no-slides"))
+            cp(a_folder, abspath(joinpath(".","no-slides")))
+            PPTX.zip("no-slides", "zipfile.pptx")
+            @test isfile("zipfile.pptx")
+            PPTX.unzip("zipfile.pptx")
+            @test isdir("zipfile")
+        end
     end
 end
 
@@ -98,5 +97,31 @@ end
         # the dark theme contains this node, which is named "<a:clrScheme name=\"Office\">" in the original theme
         str = read(theme_file, String)
         @test contains(str, "<a:clrScheme name=\"Office Theme\">")
+    end
+end
+
+@testset "custom template with media dir" begin
+    # test for issue https://github.com/ASML-Labs/PPTX.jl/issues/20
+    mktempdir() do tmpdir
+        template_name = "no-slides"
+        original_template_path = joinpath(PPTX.TEMPLATE_DIR, template_name)
+        edited_template_path = joinpath(tmpdir, template_name)
+        cp(original_template_path, edited_template_path)
+
+        # add an existing media directory
+        media_dir = joinpath(edited_template_path, "ppt", "media")
+        mkdir(media_dir)
+
+        pres = Presentation(;title="My Presentation")
+        s1 = Slide()
+        julia_logo = Picture(joinpath(PPTX.ASSETS_DIR,"julia_logo.png"), top = 110, left = 110)
+        push!(s1, julia_logo)
+        push!(pres, s1)
+
+        # originally this threw IOError: mkdir("media"; mode=0o777): file already exists (EEXIST)
+        pptx_path = joinpath(tmpdir, "example.pptx")
+        write(pptx_path, pres; open_ppt=false, template_path=edited_template_path)
+
+        @test isfile(pptx_path)
     end
 end

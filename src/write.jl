@@ -141,10 +141,8 @@ function Base.write(
         end
     end
 
-    origin = pwd()
-    try
-        mktempdir() do tmpdir
-            cd(tmpdir)
+    mktempdir() do tmpdir
+        cd(tmpdir) do
             cp(template_path, template_name)
             unzipped_dir = template_name
             if template_isfile
@@ -152,22 +150,16 @@ function Base.write(
                 unzipped_dir = first(splitext(template_name)) # remove .pptx
             end
             ppt_dir = joinpath(unzipped_dir, "ppt")
-            cd(ppt_dir)
-            write_relationships!(p)
-            write_presentation!(p)
-            write_slides!(p)
-            write_shapes!(p)
-            update_table_style!()
-            cd(tmpdir)
+            cd(ppt_dir) do
+                write_relationships!(p)
+                write_presentation!(p)
+                write_slides!(p)
+                write_shapes!(p)
+                update_table_style!()
+            end
             zip(unzipped_dir, filename)
             cp(filename, filepath)
-            # need to cd out of folder, else mktempdir cannot cleanup
-            cd(origin)
         end
-    catch e
-        rethrow(e)
-    finally
-        cd(origin)
     end
     if open_ppt
         try
@@ -197,12 +189,13 @@ end
 function zip(folder::String, filename::String)
     zip_ext_filename = split(filename, ".")[begin] * ".zip"
     origin = pwd()
-    cd(folder)
-    for f in readdir(".")
-        run_silent_pipeline(`$(exe7z()) a $zip_ext_filename $f`)
+    cd(folder) do
+        for f in readdir(".")
+            run_silent_pipeline(`$(exe7z()) a $zip_ext_filename $f`)
+        end
+        mv(zip_ext_filename, joinpath(origin, filename))
     end
-    mv(zip_ext_filename, joinpath(origin, filename))
-    return cd(origin)
+    return nothing
 end
 
 # silent, unless we error

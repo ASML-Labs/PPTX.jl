@@ -1,10 +1,11 @@
 name = "PPTX"
 uuid = "14a86994-10a4-4a7d-b9ad-ef6f3b1fac6a"
 authors = ["Xander de Vries", "Matthijs Cox"]
-version = "0.5.2"
+version = "0.5.3"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
+DefaultApplication = "3f0dd361-4fe0-5fc6-8523-80b14ec94d85"
 EzXML = "8f5d6c58-4d21-5cfd-889c-e3ad7ee6a615"
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
@@ -14,6 +15,7 @@ XMLDict = "228000da-037f-5747-90a9-8195ccbf91a5"
 
 [compat]
 DataStructures = "0.18"
+DefaultApplication = "1"
 EzXML = "1"
 FileIO = "1"
 Images = "0.25"

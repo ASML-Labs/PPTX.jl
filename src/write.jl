@@ -1,3 +1,4 @@
+import DefaultApplication
 
 function write_presentation!(p::Presentation)
     rm("./presentation.xml")
@@ -163,13 +164,7 @@ function Base.write(
     end
     if open_ppt
         try
-            if Sys.iswindows()
-                run(`cmd /C start powerpnt.exe /C $filepath`)
-            elseif Sys.isapple()
-                run(`open $filepath`)
-            else
-                run(`xdg-open $filepath`)
-            end
+            DefaultApplication.open(filepath)
         catch err
             @warn "Could not open file $filepath"
             bt = backtrace()

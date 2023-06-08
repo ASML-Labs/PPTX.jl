@@ -1,4 +1,4 @@
-using Images
+using FileIO, ImageIO
 
 """
 ```julia

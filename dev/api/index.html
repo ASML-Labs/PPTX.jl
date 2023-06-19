@@ -8,7 +8,7 @@ Picture
  offset_y is 0 EMUs
  size_x is 1440000 EMUs
  size_y is 1475072 EMUs
-</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/68c70f39c504149577fa0d1f1e1fb6b18bb6fc75/src/Picture.jl#L3-L27">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PPTX.Presentation" href="#PPTX.Presentation"><code>PPTX.Presentation</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Presentation(
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/112f9678f691bc8ff9c9b9f2aeaa9288760d8450/src/Picture.jl#L3-L27">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PPTX.Presentation" href="#PPTX.Presentation"><code>PPTX.Presentation</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Presentation(
     slides::Vector{Slide}=Slide[];
     title::String=&quot;unknown&quot;,
     author::String=&quot;unknown&quot;,
@@ -18,7 +18,7 @@ julia&gt; pres = Presentation(; title = &quot;My Presentation&quot;)
 Presentation with 1 slide
  title is &quot;My Presentation&quot;
  author is &quot;unknown&quot;
-</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/68c70f39c504149577fa0d1f1e1fb6b18bb6fc75/src/Presentation.jl#L2-L25">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PPTX.Slide" href="#PPTX.Slide"><code>PPTX.Slide</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Slide(
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/112f9678f691bc8ff9c9b9f2aeaa9288760d8450/src/Presentation.jl#L2-L25">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PPTX.Slide" href="#PPTX.Slide"><code>PPTX.Slide</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Slide(
     shapes::Vector{AbstractShape}=AbstractShape[];
     title::String=&quot;&quot;,
     layout::Int=1,
@@ -39,7 +39,7 @@ julia&gt; push!(slide, text);
 
 julia&gt; slide
 Slide(&quot;Hello Title&quot;, PPTX.AbstractShape[TextBox], 0, 2)
-</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/68c70f39c504149577fa0d1f1e1fb6b18bb6fc75/src/Slide.jl#L1-L39">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PPTX.Table" href="#PPTX.Table"><code>PPTX.Table</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Table(;
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/112f9678f691bc8ff9c9b9f2aeaa9288760d8450/src/Slide.jl#L1-L39">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PPTX.Table" href="#PPTX.Table"><code>PPTX.Table</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">Table(;
     content,
     offset_x::Real = 50,
     offset_y::Real = 50,
@@ -62,7 +62,7 @@ Table
  offset_y is 1800000 EMUs
  size_x is 1080000 EMUs
  size_y is 3600000 EMUs
-</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/68c70f39c504149577fa0d1f1e1fb6b18bb6fc75/src/Tables.jl#L1-L39">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PPTX.TextBox" href="#PPTX.TextBox"><code>PPTX.TextBox</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">TextBox(;
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/112f9678f691bc8ff9c9b9f2aeaa9288760d8450/src/Tables.jl#L1-L39">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="PPTX.TextBox" href="#PPTX.TextBox"><code>PPTX.TextBox</code></a> — <span class="docstring-category">Type</span></header><section><div><pre><code class="language-julia hljs">TextBox(;
     content::String = &quot;&quot;,
     offset_x::Real = 50,
     offset_y::Real = 50,
@@ -78,7 +78,7 @@ TextBox
  offset_y is 1800000 EMUs
  size_x is 1080000 EMUs
  size_y is 1080000 EMUs
-</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/68c70f39c504149577fa0d1f1e1fb6b18bb6fc75/src/TextBox.jl#L31-L59">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Base.write-Tuple{String, Presentation}" href="#Base.write-Tuple{String, Presentation}"><code>Base.write</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">Base.write(
+</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/112f9678f691bc8ff9c9b9f2aeaa9288760d8450/src/TextBox.jl#L31-L59">source</a></section></article><article class="docstring"><header><a class="docstring-binding" id="Base.write-Tuple{String, Presentation}" href="#Base.write-Tuple{String, Presentation}"><code>Base.write</code></a> — <span class="docstring-category">Method</span></header><section><div><pre><code class="language-julia hljs">Base.write(
     filepath::String,
     p::Presentation;
     overwrite::Bool=false,
@@ -96,4 +96,4 @@ julia&gt; pres = Presentation()
 
 julia&gt; push!(pres, slide)
 
-julia&gt; write(&quot;hello_world.pptx&quot;, pres)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/68c70f39c504149577fa0d1f1e1fb6b18bb6fc75/src/write.jl#L71-L104">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Tuesday 14 February 2023 14:54">Tuesday 14 February 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+julia&gt; write(&quot;hello_world.pptx&quot;, pres)</code></pre></div><a class="docs-sourcelink" target="_blank" href="https://github.com/ASML-Labs/PPTX.jl/blob/112f9678f691bc8ff9c9b9f2aeaa9288760d8450/src/write.jl#L71-L104">source</a></section></article></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.24 on <span class="colophon-date" title="Monday 19 June 2023 08:19">Monday 19 June 2023</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

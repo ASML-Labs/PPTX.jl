@@ -158,11 +158,10 @@ function Base.write(
                 if !endswith(name,"/")
                     if !zip_name_collision(w, name)
                         local compress = zip_iscompressed(template_reader, i)
-                        zip_openentry(template_reader, i) do io
-                            zip_newfile(w, name; compress)
-                            write(w, io)
-                            zip_commitfile(w)
-                        end
+                        zip_data = zip_readentry(template_reader, i)
+                        zip_newfile(w, name; compress)
+                        write(w, zip_data)
+                        zip_commitfile(w)
                     end
                 end
             end

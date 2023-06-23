@@ -55,7 +55,7 @@ has_rid(s::Picture) = true
 function _show_string(p::Picture, compact::Bool)
     show_string = "Picture"
     if !compact
-        show_string *= "\n source is \"$(p.source)\""
+        show_string *= "\n source is $(repr(p.source))"
         show_string *= "\n offset_x is $(p.offset_x) EMUs"
         show_string *= "\n offset_y is $(p.offset_y) EMUs"
         show_string *= "\n size_x is $(p.size_x) EMUs"

@@ -109,9 +109,16 @@ function relationship_xml(p::Picture)
     )
 end
 
-function copy_picture(p::Picture)
-    if !isfile("./media/$(filename(p))")
-        return cp(p.source, "./media/$(filename(p))")
+function copy_picture(w::ZipWriter, p::Picture)
+    dest_path = "ppt/media/$(filename(p))"
+    # save any file being written so zip_name_collision is correct.
+    zip_commitfile(w) 
+    if !zip_name_collision(w, dest_path)
+        open(p.source) do io
+            zip_newfile(w, dest_path)
+            write(w, io)
+            zip_commitfile(w)
+        end
     end
 end
 

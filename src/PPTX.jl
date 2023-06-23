@@ -3,11 +3,10 @@ module PPTX
 using XMLDict
 using EzXML
 using DataStructures
+using ZipArchives
 
 import Tables
 import Tables: columns, columnnames, rows
-
-import Pkg.PlatformEngines: exe7z
 
 export Presentation, Slide, TextBox, Picture, Table
 

@@ -146,16 +146,25 @@ function copy_picture(p::Picture)
 end
 
 function image_aspect_ratio(path::String)
-    local img
-    try
-        img = load(path)
-    catch e
-        if e isa ErrorException && contains(e.msg, "No applicable_loaders found")
-            error("Cannot load image to determine aspect ratio, consider setting `size_x` and `size_y` manually.")
-        else
-            rethrow(e)
+    if endswith(path, ".svg")
+        doc = readxml(path)
+        r = root(doc)
+        m = match(r"(?<height>\d*)", r["height"])
+        height = isnothing(m) ? 1 : parse(Float64, m[:height])
+        m = match(r"(?<width>\d*)", r["width"])
+        width = isnothing(m) ? 1 : parse(Float64, m[:width])
+    else
+        local img
+        try
+            img = load(path)
+        catch e
+            if e isa ErrorException && contains(e.msg, "No applicable_loaders found")
+                error("Cannot load image to determine aspect ratio, consider setting `size_x` and `size_y` manually.")
+            else
+                rethrow(e)
+            end
         end
+        height, width = size(img)
     end
-    height, width = size(img)
     return width / height
 end

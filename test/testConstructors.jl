@@ -43,6 +43,17 @@ using Test
 
         contains(PPTX._show_string(pic2, false), "source is \"$(pic.source)\"")
     end
+    @testset "Picture - custom aspect ratio" begin
+        # SVG is not supported by FileIO.jl
+        # this means we need to manually set the aspect ratio
+        logo_path = joinpath(PPTX.ASSETS_DIR,"julia_logo.svg")
+        msg = "Cannot load image to determine aspect ratio, consider setting `size_x` and `size_y` manually."
+        @test_throws ErrorException(msg) pic = Picture(logo_path)
+
+        pic = Picture(logo_path; size_x=40, size_y=30)
+        @test pic.size_x == 1440000
+        @test pic.size_y == 1080000
+    end
     @testset "empty" begin
         p = Presentation()
         ps = slides(p)

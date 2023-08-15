@@ -152,6 +152,7 @@ function Base.write(
             end
             ppt_dir = joinpath(unzipped_dir, "ppt")
             cd(ppt_dir) do
+                update_presentation_state!(p)
                 write_relationships!(p)
                 write_presentation!(p)
                 write_slides!(p)

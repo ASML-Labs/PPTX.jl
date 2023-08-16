@@ -20,7 +20,7 @@ using Test
     end
     @testset "Picture" begin
         @test_throws ArgumentError pic = Picture("path")
-        fnames = ["julia_logo.png", "julia_logo.svg"]
+        fnames = ["julia_logo.png", "julia_logo.svg", "julia_logo.emf", "julia_dots.wmf"]
         for fname in fnames
             logo_path = joinpath(PPTX.ASSETS_DIR, fname)
             pic = Picture(logo_path)

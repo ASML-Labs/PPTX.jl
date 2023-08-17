@@ -68,8 +68,8 @@ function update_table_style!(unzipped_ppt_dir::String=".")
     end
 end
 
-function add_contenttypes!()
-    path = joinpath("..", "[Content_Types].xml")
+function add_contenttypes!(tmpdir, unzipped_dir)
+    path = joinpath(tmpdir, unzipped_dir, "[Content_Types].xml")
     doc = readxml(path)
     r = root(doc)
     extension_contenttypes = (
@@ -183,7 +183,7 @@ function Base.write(
                 write_slides!(p)
                 write_shapes!(p)
                 update_table_style!()
-                add_contenttypes!()
+                add_contenttypes!(tmpdir, unzipped_dir)
             end
             zip(unzipped_dir, filename)
             cp(filename, filepath)

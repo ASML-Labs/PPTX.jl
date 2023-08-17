@@ -146,25 +146,50 @@ function copy_picture(p::Picture)
 end
 
 function image_aspect_ratio(path::String)
-    if endswith(path, ".svg")
+    if endswith(lowercase(path), ".svg")
         doc = readxml(path)
         r = root(doc)
         m = match(r"(?<height>\d*)", r["height"])
         height = isnothing(m) ? 1 : parse(Float64, m[:height])
         m = match(r"(?<width>\d*)", r["width"])
         width = isnothing(m) ? 1 : parse(Float64, m[:width])
-    else
-        local img
-        try
-            img = load(path)
-        catch e
-            if e isa ErrorException && contains(e.msg, "No applicable_loaders found")
-                error("Cannot load image to determine aspect ratio, consider setting `size_x` and `size_y` manually.")
-            else
-                rethrow(e)
-            end
-        end
-        height, width = size(img)
+        return width / height
     end
+    if endswith(lowercase(path), ".wmf")
+        # https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-WMF/%5bMS-WMF%5d.pdf
+        f = read(path)
+        # 2.3.2.3 META_PLACEABLE Record 
+        key = reinterpret(UInt32, f[1:4])[1]
+        iswmf = key == 0x9ac6cdd7
+        # 2.2.2.18 Rect Object
+        left, top, right, bottom = reinterpret(Int16, f[7:14])
+        width = right - left
+        height = bottom - top
+        iswmf && return width / height
+    end
+    if endswith(lowercase(path), ".emf")
+        # https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-EMF/%5bMS-EMF%5d.pdf
+        f = read(path)
+        # 2.3.4.2 EMR_HEADER Record Types
+        type = reinterpret(UInt32, f[1:4])[1]
+        isemf = type == 0x00000001
+        # 2.2.9 Header Object
+        left, top, right, bottom = reinterpret(Int32, f[9:24]) # MS-WMF 2.2.2.19
+        width = right - left
+        height = bottom - top
+        isemf && return width / height
+    end
+    
+    local img
+    try
+        img = load(path)
+    catch e
+        if e isa ErrorException && contains(e.msg, "No applicable_loaders found")
+            error("Cannot load image to determine aspect ratio, consider setting `size_x` and `size_y` manually.")
+        else
+            rethrow(e)
+        end
+    end
+    height, width = size(img)
     return width / height
 end

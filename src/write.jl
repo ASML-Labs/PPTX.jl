@@ -68,6 +68,31 @@ function update_table_style!(unzipped_ppt_dir::String=".")
     end
 end
 
+function add_contenttypes!()
+    path = joinpath("..", "[Content_Types].xml")
+    doc = readxml(path)
+    r = root(doc)
+    extension_contenttypes = (
+        ("emf", "image/x-emf"),
+        ("gif", "image/gif"),
+        ("jpeg", "image/jpeg"),
+        ("jpg", "application/octet-stream"),
+        ("png", "image/png"),
+        ("svg", "image/svg+xml"),
+        ("tif", "application/octet-stream"),
+        ("wmf", "image/x-wmf")
+    )
+    for extension_contenttype in extension_contenttypes
+        ext, ct = extension_contenttype
+        # do not add the extension if it is already defined in the template
+        isnothing(findfirst(x -> (x.name == "Default" && x["Extension"] == ext), elements(r))) || continue
+        addelement!(r, "Default Extension=\"$ext\" ContentType=\"$ct\"")
+    end
+    open(path, "w") do io
+        prettyprint(io, doc)
+    end
+end
+
 """
 ```julia
 Base.write(
@@ -158,6 +183,7 @@ function Base.write(
                 write_slides!(p)
                 write_shapes!(p)
                 update_table_style!()
+                add_contenttypes!()
             end
             zip(unzipped_dir, filename)
             cp(filename, filepath)

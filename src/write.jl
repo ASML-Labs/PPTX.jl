@@ -68,8 +68,8 @@ function update_table_style!(unzipped_ppt_dir::String=".")
     end
 end
 
-function add_contenttypes!()
-    path = joinpath("..", "[Content_Types].xml")
+function add_contenttypes!(unzipped_ppt_dir::String=".")
+    path = abspath(joinpath(unzipped_ppt_dir, "..", "[Content_Types].xml"))
     doc = readxml(path)
     r = root(doc)
     extension_contenttypes = (

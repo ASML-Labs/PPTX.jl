@@ -112,6 +112,10 @@ end
         media_dir = joinpath(edited_template_path, "ppt", "media")
         mkdir(media_dir)
 
+        # extra complexity: support read-only template support
+        # see https://github.com/ASML-Labs/PPTX.jl/issues/45
+        chmod(edited_template_path, 0o444; recursive=true)
+
         pres = Presentation(;title="My Presentation")
         s1 = Slide()
         julia_logo = Picture(joinpath(PPTX.ASSETS_DIR,"julia_logo.png"), top = 110, left = 110)

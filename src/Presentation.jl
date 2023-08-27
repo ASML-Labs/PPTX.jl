@@ -1,3 +1,13 @@
+struct PresentationSize
+    x::Int # EMUs
+    y::Int # EMUs
+end
+
+# presentation properties that are not for the user
+# these may be gathered from the .pptx template upon writing
+Base.@kwdef mutable struct PresentationState
+    size::Union{Nothing, PresentationSize} = nothing
+end
 
 """
 ```julia
@@ -27,8 +37,9 @@ struct Presentation
     title::String
     author::String
     slides::Vector{Slide}
+    _state::PresentationState
     function Presentation(slides::Vector{Slide}, author::String, title::String)
-        pres = new(title, author, Slide[])
+        pres = new(title, author, Slide[], PresentationState())
         if isempty(slides)
             slides = [Slide(; title=title, layout=TITLE_SLIDE_LAYOUT)]
         end
@@ -153,13 +164,24 @@ function make_presentation(p::Presentation)
 
     push!(xml_pres["p:presentation"], OrderedDict("p:sldIdLst" => slide_id_list))
 
+    sldSz = p._state.size
     push!(
         xml_pres["p:presentation"],
-        OrderedDict("p:sldSz" => OrderedDict("cx" => "12192000", "cy" => "6858000")),
+        OrderedDict("p:sldSz" => OrderedDict("cx" => "$(sldSz.x)", "cy" => "$(sldSz.y)")),
     )
     push!(
         xml_pres["p:presentation"],
         OrderedDict("p:notesSz" => OrderedDict("cx" => "6858000", "cy" => "9144000")),
     )
     return xml_pres
+end
+
+function update_presentation_state!(p::Presentation, ppt_dir=".")
+    doc = readxml(joinpath(ppt_dir, "presentation.xml"))
+    r = root(doc)
+    n = findfirst("//p:sldSz", r)
+    cx, cy = n["cx"], n["cy"]
+    sz = PresentationSize(parse(Int, cx), parse(Int, cy))
+    p._state.size = sz
+    return nothing
 end

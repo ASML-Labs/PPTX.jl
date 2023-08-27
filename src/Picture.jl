@@ -24,6 +24,20 @@ Picture
  size_y is 1475072 EMUs
 
 ```
+
+Optionally, you can set the `size_x` and `size_y` manually for filetypes not supported by FileIO, such as SVG.
+```julia
+julia> using PPTX
+
+julia> img = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.svg"); size_x=40, size_y=30)
+Picture
+ source is "./julia_logo.svg"
+ offset_x is 0 EMUs
+ offset_y is 0 EMUs
+ size_x is 1440000 EMUs
+ size_y is 1080000 EMUs
+
+```
 """
 struct Picture <: AbstractShape
     source::String
@@ -34,21 +48,37 @@ struct Picture <: AbstractShape
     rid::Int
 end
 
-function Picture(source::String; top::Real=0, left::Real=0, offset_x::Real=left, offset_y::Real=top, size::Real=40, rid::Int=0)
-    ratio = image_aspect_ratio(source)
-    size_x = Int(round(size * _EMUS_PER_MM))
-    size_y = Int(round(size_x / ratio))
+function Picture(
+    source::String;
+    top::Real=0,
+    left::Real=0,
+    offset_x::Real=left,
+    offset_y::Real=top,
+    size::Real=40,
+    size_x::Real=size,
+    size_y::Union{Nothing, Real}=nothing,
+    rid::Int=0,
+)
+    scaled_size_x = Int(round(size_x * _EMUS_PER_MM))
+    if isnothing(size_y)
+        ratio = image_aspect_ratio(source)
+        scaled_size_y = Int(round(scaled_size_x / ratio))
+    else
+        scaled_size_y = Int(round(size_y * _EMUS_PER_MM))
+    end
     return Picture(
         source,
         Int(round(offset_x * _EMUS_PER_MM)),
         Int(round(offset_y * _EMUS_PER_MM)),
-        size_x,
-        size_y,
+        scaled_size_x,
+        scaled_size_y,
         rid,
     )
 end
 
-set_rid(s::Picture, i::Int) = Picture(s.source, s.offset_x, s.offset_y, s.size_x, s.size_y, i)
+function set_rid(s::Picture, i::Int)
+    return Picture(s.source, s.offset_x, s.offset_y, s.size_x, s.size_y, i)
+end
 rid(s::Picture) = s.rid
 has_rid(s::Picture) = true
 
@@ -123,8 +153,50 @@ function copy_picture(w::ZipWriter, p::Picture)
 end
 
 function image_aspect_ratio(path::String)
-    img = load(path)
+    if endswith(lowercase(path), ".svg")
+        doc = readxml(path)
+        r = root(doc)
+        m = match(r"(?<height>\d*)", r["height"])
+        height = isnothing(m) ? 1 : parse(Float64, m[:height])
+        m = match(r"(?<width>\d*)", r["width"])
+        width = isnothing(m) ? 1 : parse(Float64, m[:width])
+        return width / height
+    end
+    if endswith(lowercase(path), ".wmf")
+        # https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-WMF/%5bMS-WMF%5d.pdf
+        f = read(path)
+        # 2.3.2.3 META_PLACEABLE Record 
+        key = reinterpret(UInt32, f[1:4])[1]
+        iswmf = key == 0x9ac6cdd7
+        # 2.2.2.18 Rect Object
+        left, top, right, bottom = reinterpret(Int16, f[7:14])
+        width = right - left
+        height = bottom - top
+        iswmf && return width / height
+    end
+    if endswith(lowercase(path), ".emf")
+        # https://winprotocoldoc.blob.core.windows.net/productionwindowsarchives/MS-EMF/%5bMS-EMF%5d.pdf
+        f = read(path)
+        # 2.3.4.2 EMR_HEADER Record Types
+        type = reinterpret(UInt32, f[1:4])[1]
+        isemf = type == 0x00000001
+        # 2.2.9 Header Object
+        left, top, right, bottom = reinterpret(Int32, f[9:24]) # MS-WMF 2.2.2.19
+        width = right - left
+        height = bottom - top
+        isemf && return width / height
+    end
+    
+    local img
+    try
+        img = load(path)
+    catch e
+        if e isa ErrorException && contains(e.msg, "No applicable_loaders found")
+            error("Cannot load image to determine aspect ratio, consider setting `size_x` and `size_y` manually.")
+        else
+            rethrow(e)
+        end
+    end
     height, width = size(img)
     return width / height
 end
-

@@ -77,9 +77,9 @@ function update_table_style!(w::ZipWriter, template::ZipBufferReader)
     nothing
 end
 
-function add_contenttypes!()
-    path = joinpath("..", "[Content_Types].xml")
-    doc = readxml(path)
+function add_contenttypes!(w::ZipWriter, template::ZipBufferReader)
+    path = "[Content_Types].xml"
+    doc = EzXML.parsexml(zip_readentry(template, path))
     r = root(doc)
     extension_contenttypes = (
         ("emf", "image/x-emf"),
@@ -97,10 +97,9 @@ function add_contenttypes!()
         isnothing(findfirst(x -> (x.name == "Default" && x["Extension"] == ext), elements(r))) || continue
         addelement!(r, "Default Extension=\"$ext\" ContentType=\"$ct\"")
     end
-    chmod(path, 0o644)
-    open(path, "w") do io
-        prettyprint(io, doc)
-    end
+    zip_newfile(w, path; compress=true)
+    prettyprint(w, doc)
+    zip_commitfile(w)
 end
 
 """
@@ -172,11 +171,13 @@ function Base.write(
 
     mktemp(filedir) do temp_path, temp_out
         ZipWriter(temp_out; own_io=true) do w
+            update_presentation_state!(p, template_reader)
             write_relationships!(w, p)
             write_presentation!(w, p)
             write_slides!(w, p, template_reader)
             write_shapes!(w, p)
             update_table_style!(w, template_reader)
+            add_contenttypes!(w, template_reader)
             # copy over any files from the template
             # but don't overwrite any files in w
             for i in zip_nentries(template_reader):-1:1

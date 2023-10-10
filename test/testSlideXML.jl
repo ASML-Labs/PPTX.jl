@@ -1,7 +1,7 @@
 using Test
 using PPTX
 using EzXML
-using ZipArchives
+using ZipArchives: ZipBufferReader, zip_readentry
 
 @testset "Slide XML structure" begin
     s = Slide()

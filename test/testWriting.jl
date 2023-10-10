@@ -1,3 +1,5 @@
+using ZipArchives:
+    ZipBufferReader, zip_readentry, zip_names, zip_append_archive, zip_newfile
 
 function bincompare(path::String, ref::String)
     bin1 = read(path)
@@ -93,8 +95,8 @@ end
         cp(original_template_path, edited_template_path)
         zip_append_archive(edited_template_path) do w
             # add an existing media directory
-            zip_mkdir(w, "ppt/media")
-            zip_writefile(w, "ppt/media/foo.png", read(joinpath(PPTX.ASSETS_DIR,"julia_logo.png")))
+            zip_newfile(w, "ppt/media/foo.png")
+            write(w, read(joinpath(PPTX.ASSETS_DIR,"julia_logo.png")))
         end
 
         pres = Presentation(;title="My Presentation")

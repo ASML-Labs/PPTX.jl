@@ -3,7 +3,9 @@ module PPTX
 using XMLDict
 using EzXML
 using DataStructures
-using ZipArchives
+using ZipArchives:
+    ZipBufferReader, ZipWriter, zip_commitfile, zip_newfile, zip_nentries,
+    zip_name, zip_name_collision, zip_isdir, zip_readentry, zip_iscompressed
 
 import Tables
 import Tables: columns, columnnames, rows

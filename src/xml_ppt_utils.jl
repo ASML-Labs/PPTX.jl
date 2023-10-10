@@ -22,24 +22,11 @@ function main_attributes()::Vector{OrderedDict}
     ]
 end
 
-function get_slide_layout_path(layout::Int, unzipped_ppt_dir::String=".")
-    filename = "slideLayout$layout.xml"
-    path = joinpath(unzipped_ppt_dir, "slideLayouts", filename)
-    return abspath(path)
-end
-
 function xpath_to_find_sp_type(type_name::String)
     return "//p:spTree/p:sp/p:nvSpPr[1]/p:nvPr[1]/p:ph[1][@type=\"$type_name\"][1]/ancestor::p:sp[1]"
 end
 
-function get_title_shape_node(s::Slide, unzipped_ppt_dir::String=".")
-    get_title_shape_node(s.layout, unzipped_ppt_dir)
-end
-
-function get_title_shape_node(layout::Int, unzipped_ppt_dir::String=".")
-    layout_path = get_slide_layout_path(layout, unzipped_ppt_dir)
-    layout_doc = EzXML.readxml(layout_path)
-
+function get_title_shape_node(layout_doc::EzXML.Document)
     # the xpath way to find things
     # note: on layout2 and forth it's type="title", layout1 uses type="ctrTitle"
     xpath = xpath_to_find_sp_type("title")
@@ -87,9 +74,7 @@ function update_shape_id!(sp_node::EzXML.Node, id::Int)
     return nothing
 end
 
-function has_empty_table_list(unzipped_ppt_dir::String=".")
-    table_style_path = abspath(joinpath(unzipped_ppt_dir, "tableStyles.xml"))
-    table_style_doc = EzXML.readxml(table_style_path)
+function has_empty_table_list(table_style_doc::EzXML.Document)
     tblStyles = findall("//a:tblStyleLst/a:tblStyle", root(table_style_doc))
     return isnothing(tblStyles) || isempty(tblStyles)
 end

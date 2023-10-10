@@ -2,6 +2,7 @@ using PPTX
 using Test
 using DataFrames
 using EzXML
+using ZipArchives: ZipBufferReader, zip_readentry
 
 @testset "PPTX Tables from a DataFrame" begin
     df = DataFrame(a = [1,2], b = [3,4], c = [5,6])
@@ -50,9 +51,11 @@ using EzXML
 end
 
 @testset "check empty table style list" begin
-    tableStyles_folder = abspath(joinpath(PPTX.TEMPLATE_DIR))
-    @test !PPTX.has_empty_table_list(tableStyles_folder)
+    tableStyles_path = abspath(joinpath(PPTX.TEMPLATE_DIR, "tableStyles.xml"))
+    table_style_doc = EzXML.parsexml(read(tableStyles_path))
+    @test !PPTX.has_empty_table_list(table_style_doc)
 
-    tableStyles_folder = abspath(joinpath(PPTX.TEMPLATE_DIR, "no-slides", "ppt"))
-    @test PPTX.has_empty_table_list(tableStyles_folder)
+    no_slides_template = ZipBufferReader(read(joinpath(PPTX.TEMPLATE_DIR, "no-slides.pptx")))
+    table_style_doc = EzXML.parsexml(zip_readentry(no_slides_template, "ppt/tableStyles.xml"))
+    @test PPTX.has_empty_table_list(table_style_doc)
 end

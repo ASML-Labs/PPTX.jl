@@ -1,6 +1,7 @@
 using Test
 using PPTX
 using EzXML
+using ZipArchives: ZipBufferReader, zip_readentry
 
 @testset "Slide XML structure" begin
     s = Slide()
@@ -33,12 +34,12 @@ end
 end
 
 @testset "update title in XML" begin
-    unzipped_ppt_dir = joinpath(PPTX.TEMPLATE_DIR,"no-slides","ppt")
+    template = ZipBufferReader(read(joinpath(PPTX.TEMPLATE_DIR,"no-slides.pptx")))
 
     @testset "slideLayout1.xml" begin
         slide = Slide(;layout=1)
-
-        sp_node = PPTX.get_title_shape_node(slide, unzipped_ppt_dir)
+        layout_path = "ppt/slideLayouts/slideLayout$(slide.layout).xml"
+        sp_node = PPTX.get_title_shape_node(EzXML.parsexml(zip_readentry(template, layout_path)))
 
         # check we can mutate the title
         t = PPTX.get_title_from_shape_node(sp_node)
@@ -58,14 +59,15 @@ end
     @testset "slideLayout2.xml" begin
         slide = Slide(;layout=2)
 
-        sp_node = PPTX.get_title_shape_node(slide, unzipped_ppt_dir)
+        layout_path = "ppt/slideLayouts/slideLayout$(slide.layout).xml"
+        sp_node = PPTX.get_title_shape_node(EzXML.parsexml(zip_readentry(template, layout_path)))
         @test !isnothing(sp_node)
         t = PPTX.get_title_from_shape_node(sp_node)
         @test t.content == "Click to edit Master title style"
 
         xml = PPTX.make_slide(slide)
         doc = PPTX.xml_document(xml)
-        PPTX.add_title_shape!(doc, slide, unzipped_ppt_dir)
+        PPTX.add_title_shape!(doc, slide, template)
     end
 
     @testset "test unique shape ids" begin
@@ -79,7 +81,7 @@ end
         ids = PPTX.get_shape_ids(doc)
         @test ids == [1,2,3]
 
-        PPTX.add_title_shape!(doc, slide, unzipped_ppt_dir)
+        PPTX.add_title_shape!(doc, slide, template)
         ids = PPTX.get_shape_ids(doc)
         @test ids == [1,2,3,4]
     end

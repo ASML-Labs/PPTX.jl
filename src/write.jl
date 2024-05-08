@@ -1,40 +1,46 @@
 import DefaultApplication
 
-function write_presentation!(p::Presentation)
-    rm("./presentation.xml")
+function write_presentation!(w::ZipWriter, p::Presentation)
     xml = make_presentation(p)
     doc = xml_document(xml)
-    return write("./presentation.xml", doc)
+    zip_newfile(w, "ppt/presentation.xml"; compress=true)
+    print(w, doc)
+    zip_commitfile(w)
 end
 
-function write_relationships!(p::Presentation)
-    rm("./_rels/presentation.xml.rels")
+function write_relationships!(w::ZipWriter, p::Presentation)
     xml = make_relationships(p)
     doc = xml_document(xml)
-    return write("./_rels/presentation.xml.rels", doc)
+    zip_newfile(w, "ppt/_rels/presentation.xml.rels"; compress=true)
+    print(w, doc)
+    zip_commitfile(w)
 end
 
-function write_slides!(p::Presentation)
-    if isdir("slides")
+function write_slides!(w::ZipWriter, p::Presentation, template::ZipBufferReader)
+    if zip_isdir(template, "ppt/slides")
         error("input template pptx already contains slides, please use an empty template")
     end
-    mkdir("slides")
-    mkdir("slides/_rels")
     for (idx, slide) in enumerate(slides(p))
         xml = make_slide(slide)
         doc::EzXML.Document = xml_document(xml)
-        add_title_shape!(doc, slide)
-        write("./slides/slide$idx.xml", doc)
+        add_title_shape!(doc, slide, template)
+        zip_newfile(w, "ppt/slides/slide$idx.xml"; compress=true)
+        print(w, doc)
+        zip_commitfile(w)
         xml = make_slide_relationships(slide)
         doc = xml_document(xml)
-        write("./slides/_rels/slide$idx.xml.rels", doc)
+        zip_newfile(w, "ppt/slides/_rels/slide$idx.xml.rels"; compress=true)
+        print(w, doc)
+        zip_commitfile(w)
     end
 end
 
-function add_title_shape!(doc::EzXML.Document, slide::Slide, unzipped_ppt_dir::String=".")
+function add_title_shape!(doc::EzXML.Document, slide::Slide, template::ZipBufferReader)
     # xpath to find something with an unregistered namespace
     spTree = findfirst("//*[local-name()='p:spTree']", root(doc))
-    title_shape_node = PPTX.get_title_shape_node(slide, unzipped_ppt_dir)
+    layout_path = "ppt/slideLayouts/slideLayout$(slide.layout).xml"
+    layout_doc = EzXML.parsexml(zip_readentry(template, layout_path))
+    title_shape_node = PPTX.get_title_shape_node(layout_doc)
     if !isnothing(title_shape_node)
         PPTX.update_xml_title!(title_shape_node, slide.title)
         new_id = maximum(get_shape_ids(doc))+1
@@ -42,35 +48,38 @@ function add_title_shape!(doc::EzXML.Document, slide::Slide, unzipped_ppt_dir::S
         unlink!(title_shape_node)
         link!(spTree, title_shape_node)
     end
-    return nothing
+    nothing
 end
 
-function write_shapes!(pres::Presentation)
-    if !isdir("media")
-        mkdir("media")
-    end
+function write_shapes!(w::ZipWriter, pres::Presentation)
     for slide in slides(pres)
         for shape in shapes(slide)
             if shape isa Picture
-                copy_picture(shape)
+                copy_picture(w::ZipWriter, shape)
             end
         end
     end
 end
 
-function update_table_style!(unzipped_ppt_dir::String=".")
+function update_table_style!(w::ZipWriter, template::ZipBufferReader)
     # minimally we want at least one table style
-    if has_empty_table_list(unzipped_ppt_dir)
+    table_style_path = "ppt/tableStyles.xml"
+    table_style_doc = EzXML.parsexml(zip_readentry(template, table_style_path))
+    if has_empty_table_list(table_style_doc)
         table_style_filename = "tableStyles.xml"
         default_table_style_file = joinpath(TEMPLATE_DIR, table_style_filename)
-        destination_table_style_file = joinpath(unzipped_ppt_dir, table_style_filename)
-        cp(default_table_style_file, destination_table_style_file; force=true)
+        open(default_table_style_file) do io
+            zip_newfile(w, table_style_path; compress=true)
+            write(w, io)
+            zip_commitfile(w)
+        end
     end
+    nothing
 end
 
-function add_contenttypes!()
-    path = joinpath("..", "[Content_Types].xml")
-    doc = readxml(path)
+function add_contenttypes!(w::ZipWriter, template::ZipBufferReader)
+    path = "[Content_Types].xml"
+    doc = EzXML.parsexml(zip_readentry(template, path))
     r = root(doc)
     extension_contenttypes = (
         ("emf", "image/x-emf"),
@@ -88,10 +97,9 @@ function add_contenttypes!()
         isnothing(findfirst(x -> (x.name == "Default" && x["Extension"] == ext), elements(r))) || continue
         addelement!(r, "Default Extension=\"$ext\" ContentType=\"$ct\"")
     end
-    chmod(path, 0o644)
-    open(path, "w") do io
-        prettyprint(io, doc)
-    end
+    zip_newfile(w, path; compress=true)
+    prettyprint(w, doc)
+    zip_commitfile(w)
 end
 
 """
@@ -133,19 +141,18 @@ function Base.write(
     p::Presentation;
     overwrite::Bool=false,
     open_ppt::Bool=true,
-    template_path::String=joinpath(TEMPLATE_DIR, "no-slides"),
+    template_path::String=joinpath(TEMPLATE_DIR, "no-slides.pptx"),
 )
 
     template_path = abspath(template_path)
-    template_name = splitpath(template_path)[end]
-    template_isdir = isdir(template_path)
     template_isfile = isfile(template_path)
 
-    if !template_isdir && !template_isfile
+    if !template_isfile
         error(
-            "No file found at template path: $template_path",
+            "No file found at template path: $(repr(template_path))",
         )
     end
+    template_reader = ZipBufferReader(read(template_path))
 
     if !endswith(filepath, ".pptx")
         filepath *= ".pptx"
@@ -154,80 +161,49 @@ function Base.write(
     filepath = abspath(filepath)
     filedir, filename = splitdir(filepath)
 
-    if !isdir(filedir)
-        mkdir(filedir)
+    mkpath(filedir)
+
+    if !overwrite && isfile(filepath)
+        error(
+            "File $(repr(filepath)) already exists use \"overwrite = true\" or a different name to proceed",
+        )
     end
 
-    if isfile(filepath)
-        if overwrite
-            rm(filepath)
-        else
-            error(
-                "File \"$filepath\" already exists use \"overwrite = true\" or a different name to proceed",
-            )
+    mktemp(filedir) do temp_path, temp_out
+        ZipWriter(temp_out; own_io=true) do w
+            update_presentation_state!(p, template_reader)
+            write_relationships!(w, p)
+            write_presentation!(w, p)
+            write_slides!(w, p, template_reader)
+            write_shapes!(w, p)
+            update_table_style!(w, template_reader)
+            add_contenttypes!(w, template_reader)
+            # copy over any files from the template
+            # but don't overwrite any files in w
+            for i in zip_nentries(template_reader):-1:1
+                local name = zip_name(template_reader, i)
+                if !endswith(name,"/")
+                    if !zip_name_collision(w, name)
+                        local compress = zip_iscompressed(template_reader, i)
+                        zip_data = zip_readentry(template_reader, i)
+                        zip_newfile(w, name; compress)
+                        write(w, zip_data)
+                        zip_commitfile(w)
+                    end
+                end
+            end
         end
+        mv(temp_path, filepath; force=overwrite)
     end
 
-    mktempdir() do tmpdir
-        cd(tmpdir) do
-            cp(template_path, template_name)
-            unzipped_dir = template_name
-            if template_isfile
-                unzip(template_name)
-                unzipped_dir = first(splitext(template_name)) # remove .pptx
-            end
-            ppt_dir = joinpath(unzipped_dir, "ppt")
-            cd(ppt_dir) do
-                update_presentation_state!(p)
-                write_relationships!(p)
-                write_presentation!(p)
-                write_slides!(p)
-                write_shapes!(p)
-                update_table_style!()
-                add_contenttypes!()
-            end
-            zip(unzipped_dir, filename)
-            cp(filename, filepath)
-        end
-    end
     if open_ppt
         try
             DefaultApplication.open(filepath)
         catch err
-            @warn "Could not open file $filepath"
+            @warn "Could not open file $(repr(filepath))"
             bt = backtrace()
             print(sprint(showerror, err, bt))
         end
     end
     return nothing
-end
-
-# unzips file as folder into current folder
-function unzip(path::String)
-    output = split(path, ".pptx")[begin]
-    run_silent_pipeline(`$(exe7z()) x $path -o$output`)
-end
-
-# Turns folder into zipped file
-function zip(folder::String, filename::String)
-    zip_ext_filename = split(filename, ".")[begin] * ".zip"
-    origin = pwd()
-    cd(folder) do
-        for f in readdir(".")
-            run_silent_pipeline(`$(exe7z()) a $zip_ext_filename $f`)
-        end
-        mv(zip_ext_filename, joinpath(origin, filename))
-    end
-    return nothing
-end
-
-# silent, unless we error
-function run_silent_pipeline(command)
-    standard_output = Pipe() # capture output, so it doesn't pollute the REPL
-    try
-        run(pipeline(command, stdout=standard_output))
-    catch e
-        println(standard_output)
-        rethrow(e)
-    end
 end

@@ -1,3 +1,5 @@
+using ZipArchives:
+    ZipBufferReader, zip_readentry, zip_names, zip_append_archive, zip_newfile
 
 function bincompare(path::String, ref::String)
     bin1 = read(path)
@@ -19,21 +21,6 @@ function write_and_remove(fname::String, p::Presentation)
     PPTX.write(fname, p, overwrite = true, open_ppt = false)
     rm(fname)
     return true
-end
-
-@testset "zipping/unzipping" begin
-
-    # simple zip/unzip test
-    mktempdir() do tmpdir
-        cd(tmpdir) do
-            a_folder = abspath(joinpath(PPTX.TEMPLATE_DIR,"no-slides"))
-            cp(a_folder, abspath(joinpath(".","no-slides")))
-            PPTX.zip("no-slides", "zipfile.pptx")
-            @test isfile("zipfile.pptx")
-            PPTX.unzip("zipfile.pptx")
-            @test isdir("zipfile")
-        end
-    end
 end
 
 @testset "writing" begin
@@ -60,7 +47,7 @@ end
 # TODO: also support .potx next to empty .pptx
 # TODO: what if the .pptx template already has slides?
 @testset "custom template" begin
-    dark_template_name = "no-slides-dark"
+    dark_template_name = "no-slides-dark.pptx"
     dark_template_path = joinpath(PPTX.TEMPLATE_DIR, dark_template_name)
     pres = Presentation(;title="My Presentation")
     s = Slide()
@@ -68,7 +55,7 @@ end
 
     # error testing
     wrong_path = abspath(joinpath(".", "wrong_path"))
-    err_msg = "No file found at template path: $wrong_path"
+    err_msg = "No file found at template path: $(repr(wrong_path))"
     @test_throws ErrorException(err_msg) PPTX.write(
         "anywhere.pptx",
         pres;
@@ -87,15 +74,14 @@ end
             open_ppt=false,
             template_path=dark_template_path,
         )
-        PPTX.unzip(output_pptx)
-        output_unzipped_pptx = abspath(joinpath(tmpdir, filename))
-        dir_contents = readdir(output_unzipped_pptx)
-        theme_file = joinpath(output_unzipped_pptx, "ppt", "theme", "theme1.xml")
-        @test isfile(theme_file)
+        output_zip = ZipBufferReader(read(output_pptx))
+        dir_contents = zip_names(output_zip)
+        theme_file = "ppt/theme/theme1.xml"
+        @test theme_file ∈ dir_contents
 
         # file compare is failing on Linux, using string comparisons
         # the dark theme contains this node, which is named "<a:clrScheme name=\"Office\">" in the original theme
-        str = read(theme_file, String)
+        str = zip_readentry(output_zip, theme_file, String)
         @test contains(str, "<a:clrScheme name=\"Office Theme\">")
     end
 end
@@ -103,14 +89,15 @@ end
 @testset "custom template with media dir" begin
     # test for issue https://github.com/ASML-Labs/PPTX.jl/issues/20
     mktempdir() do tmpdir
-        template_name = "no-slides"
+        template_name = "no-slides.pptx"
         original_template_path = joinpath(PPTX.TEMPLATE_DIR, template_name)
         edited_template_path = joinpath(tmpdir, template_name)
         cp(original_template_path, edited_template_path)
-
-        # add an existing media directory
-        media_dir = joinpath(edited_template_path, "ppt", "media")
-        mkdir(media_dir)
+        zip_append_archive(edited_template_path) do w
+            # add an existing media directory
+            zip_newfile(w, "ppt/media/foo.png")
+            write(w, read(joinpath(PPTX.ASSETS_DIR,"julia_logo.png")))
+        end
 
         pres = Presentation(;title="My Presentation")
         s1 = Slide()

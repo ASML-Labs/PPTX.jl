@@ -85,7 +85,7 @@ has_rid(s::Picture) = true
 function _show_string(p::Picture, compact::Bool)
     show_string = "Picture"
     if !compact
-        show_string *= "\n source is \"$(p.source)\""
+        show_string *= "\n source is $(repr(p.source))"
         show_string *= "\n offset_x is $(p.offset_x) EMUs"
         show_string *= "\n offset_y is $(p.offset_y) EMUs"
         show_string *= "\n size_x is $(p.size_x) EMUs"
@@ -139,9 +139,16 @@ function relationship_xml(p::Picture)
     )
 end
 
-function copy_picture(p::Picture)
-    if !isfile("./media/$(filename(p))")
-        return cp(p.source, "./media/$(filename(p))")
+function copy_picture(w::ZipWriter, p::Picture)
+    dest_path = "ppt/media/$(filename(p))"
+    # save any file being written so zip_name_collision is correct.
+    zip_commitfile(w) 
+    if !zip_name_collision(w, dest_path)
+        open(p.source) do io
+            zip_newfile(w, dest_path)
+            write(w, io)
+            zip_commitfile(w)
+        end
     end
 end
 

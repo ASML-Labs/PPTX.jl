@@ -1,0 +1,9 @@
+[pptx_data]
+git-tree-sha1 = "02f90f83af29c5c2e4b81721ba96ce9efc98741f"
+    [[pptx_data.download]]
+    url = "https://github.com/ig-or/PPTX.jl/releases/download/v0.7.0/data.tar.gz"
+    sha256 = "4e61f7667dbed4f96542401d67d09c78678271ca802613c1ba9c97c988031fb3"
+
+
+
+

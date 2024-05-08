@@ -1,4 +1,5 @@
 import DefaultApplication
+using Artifacts
 
 function write_presentation!(w::ZipWriter, p::Presentation)
     xml = make_presentation(p)
@@ -67,7 +68,7 @@ function update_table_style!(w::ZipWriter, template::ZipBufferReader)
     table_style_doc = EzXML.parsexml(zip_readentry(template, table_style_path))
     if has_empty_table_list(table_style_doc)
         table_style_filename = "tableStyles.xml"
-        default_table_style_file = joinpath(TEMPLATE_DIR, table_style_filename)
+        default_table_style_file = joinpath(artifact"pptx_data", "templates", table_style_filename)
         open(default_table_style_file) do io
             zip_newfile(w, table_style_path; compress=true)
             write(w, io)
@@ -141,7 +142,7 @@ function Base.write(
     p::Presentation;
     overwrite::Bool=false,
     open_ppt::Bool=true,
-    template_path::String=joinpath(TEMPLATE_DIR, "no-slides.pptx"),
+    template_path::String=joinpath(artifact"pptx_data", "templates", "no-slides.pptx"),
 )
 
     template_path = abspath(template_path)

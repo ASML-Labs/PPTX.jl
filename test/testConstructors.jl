@@ -22,7 +22,7 @@ using Test
         @test_throws ArgumentError pic = Picture("path")
         fnames = ["julia_logo.png", "julia_logo.svg", "julia_logo.emf", "julia_dots.wmf"]
         for fname in fnames
-            logo_path = joinpath(PPTX.ASSETS_DIR, fname)
+            logo_path = joinpath(artifact"pptx_data", "assets", fname)
             pic = Picture(logo_path)
             @test pic.offset_x == 0
             width = 150
@@ -47,7 +47,7 @@ using Test
         end
     end
     @testset "Picture - custom aspect ratio" begin
-        logo_path = joinpath(PPTX.ASSETS_DIR,"julia_logo.svg")
+        logo_path = joinpath(artifact"pptx_data", "assets","julia_logo.svg")
         pic = Picture(logo_path; size_x=40, size_y=30)
         @test pic.size_x == 1440000
         @test pic.size_y == 1080000
@@ -64,14 +64,14 @@ using Test
     @testset "first slide" begin
         p = Presentation()
         @test rid(p.slides[1]) == 6
-        picture_path = joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg")
+        picture_path = joinpath(artifact"pptx_data", "assets", "cauliflower.jpg")
         p = Presentation([Slide([TextBox(),Picture(picture_path)])])
         @test rid(p.slides[1].shapes[1]) == 0
         @test rid(p.slides[1].shapes[2]) == 1
     end
     @testset "Slide" begin
         slide = Slide()
-        picture_path = joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg")
+        picture_path = joinpath(artifact"pptx_data", "assets", "cauliflower.jpg")
         push!(slide, Picture(picture_path))
     end
 end

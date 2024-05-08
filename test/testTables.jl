@@ -51,11 +51,11 @@ using ZipArchives: ZipBufferReader, zip_readentry
 end
 
 @testset "check empty table style list" begin
-    tableStyles_path = abspath(joinpath(PPTX.TEMPLATE_DIR, "tableStyles.xml"))
+    tableStyles_path = abspath(joinpath(artifact"pptx_data", "templates", "tableStyles.xml"))
     table_style_doc = EzXML.parsexml(read(tableStyles_path))
     @test !PPTX.has_empty_table_list(table_style_doc)
 
-    no_slides_template = ZipBufferReader(read(joinpath(PPTX.TEMPLATE_DIR, "no-slides.pptx")))
+    no_slides_template = ZipBufferReader(read(joinpath(artifact"pptx_data", "templates", "no-slides.pptx")))
     table_style_doc = EzXML.parsexml(zip_readentry(no_slides_template, "ppt/tableStyles.xml"))
     @test PPTX.has_empty_table_list(table_style_doc)
 end

@@ -2,7 +2,7 @@ using Test
 using PPTX
 
 @testset "Presentation Size" begin
-    template_folder = abspath(joinpath(PPTX.TEMPLATE_DIR,"no-slides"))
+    template_folder = abspath(joinpath(artifact"pptx_data", "templates","no-slides"))
     p = Presentation()
     ppt_dir = joinpath(template_folder, "ppt")
     PPTX.update_presentation_state!(p, ppt_dir)

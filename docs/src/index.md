@@ -17,6 +17,7 @@ You can build a presentation inside Julia:
 
 ```jldoctest
 using PPTX, DataFrames
+using Artifacts
 
 # Lets make a presentation
 # note: this already adds a first slide with the title

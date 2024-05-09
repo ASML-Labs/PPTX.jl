@@ -14,6 +14,7 @@ Internally the sizes are converted EMUs.
 # Examples
 ```julia
 julia> using PPTX
+julia> using Artifacts
 
 julia> img = Picture(joinpath(artifact"pptx_data", "assets", "cauliflower.jpg"))
 Picture
@@ -28,6 +29,7 @@ Picture
 Optionally, you can set the `size_x` and `size_y` manually for filetypes not supported by FileIO, such as SVG.
 ```julia
 julia> using PPTX
+julia> using Artifacts
 
 julia> img = Picture(joinpath(artifact"pptx_data", "assets", "julia_logo.svg"); size_x=40, size_y=30)
 Picture

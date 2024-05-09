@@ -1,5 +1,6 @@
 using Test
 using PPTX
+using Artifacts
 
 @testset "Presentation Size" begin
     template_folder = abspath(joinpath(artifact"pptx_data", "templates","no-slides"))

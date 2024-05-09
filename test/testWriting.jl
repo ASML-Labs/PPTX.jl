@@ -1,5 +1,7 @@
 using ZipArchives:
     ZipBufferReader, zip_readentry, zip_names, zip_append_archive, zip_newfile
+    
+using Artifacts
 
 function bincompare(path::String, ref::String)
     bin1 = read(path)

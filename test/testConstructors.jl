@@ -1,5 +1,6 @@
 using PPTX
 using Test
+using Artifacts
 
 @testset "constructors" begin
     @testset "TextBox" begin

@@ -3,6 +3,7 @@ using Test
 using DataFrames
 using EzXML
 using ZipArchives: ZipBufferReader, zip_readentry
+using Artifacts
 
 @testset "PPTX Tables from a DataFrame" begin
     df = DataFrame(a = [1,2], b = [3,4], c = [5,6])

@@ -2,6 +2,7 @@ using Test
 using PPTX
 using EzXML
 using ZipArchives: ZipBufferReader, zip_readentry
+using Artifacts
 
 @testset "Slide XML structure" begin
     s = Slide()

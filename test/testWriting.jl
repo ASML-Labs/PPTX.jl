@@ -92,7 +92,7 @@ end
         template_name = "no-slides.pptx"
         original_template_path = joinpath(PPTX.TEMPLATE_DIR, template_name)
         edited_template_path = joinpath(tmpdir, template_name)
-        cp(original_template_path, edited_template_path)
+        write(edited_template_path, read(original_template_path))
         zip_append_archive(edited_template_path) do w
             # add an existing media directory
             zip_newfile(w, "ppt/media/foo.png")

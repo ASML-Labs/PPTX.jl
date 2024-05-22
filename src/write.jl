@@ -1,4 +1,5 @@
 import DefaultApplication
+using Artifacts
 
 function write_presentation!(w::ZipWriter, p::Presentation)
     xml = make_presentation(p)
@@ -137,7 +138,7 @@ function Base.write(
     p::Presentation;
     overwrite::Bool=false,
     open_ppt::Bool=true,
-    template_path::String=joinpath(TEMPLATE_DIR, "no-slides.pptx"),
+    template_path::String=joinpath(artifact"pptx_data", "templates", "no-slides.pptx"),
 )
 
     template_path = abspath(template_path)

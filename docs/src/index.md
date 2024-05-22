@@ -17,6 +17,7 @@ You can build a presentation inside Julia:
 
 ```jldoctest
 using PPTX, DataFrames
+using Artifacts
 
 # Lets make a presentation
 # note: this already adds a first slide with the title
@@ -31,14 +32,14 @@ push!(s2, text2)
 push!(pres, s2)
 
 # Now lets add a picture and some text
-cauli_pic = Picture(joinpath(PPTX.ASSETS_DIR,"cauliflower.jpg"))
+cauli_pic = Picture(joinpath(artifact"pptx_data", "assets","cauliflower.jpg"))
 text = TextBox(content="Look its a vegetable!")
 s3 = Slide()
 push!(s3, cauli_pic)
 push!(s3, text)
 
 # move picture 100 mm down and 100 mm right
-julia_logo = Picture(joinpath(PPTX.ASSETS_DIR,"julia_logo.png"), offset_x=100, offset_y=100)
+julia_logo = Picture(joinpath(artifact"pptx_data", "assets","julia_logo.png"), offset_x=100, offset_y=100)
 push!(s3, julia_logo)
 push!(pres, s3)
 

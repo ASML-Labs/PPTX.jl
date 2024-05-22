@@ -1,5 +1,7 @@
 using ZipArchives:
     ZipBufferReader, zip_readentry, zip_names, zip_append_archive, zip_newfile
+    
+using Artifacts
 
 function bincompare(path::String, ref::String)
     bin1 = read(path)
@@ -25,7 +27,7 @@ end
 
 @testset "writing" begin
     @testset "push same picture" begin
-        picture_path = joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg")
+        picture_path = joinpath(artifact"pptx_data", "assets", "cauliflower.jpg")
         p = Presentation([Slide([Picture(picture_path)]), Slide([Picture(picture_path)])])
         @test write_and_remove("test.pptx", p)
     end
@@ -33,7 +35,7 @@ end
     @testset "pushing same picture twice" begin
         pres = Presentation()
         s1 = Slide()
-        julia_logo = Picture(joinpath(PPTX.ASSETS_DIR,"julia_logo.png"), top = 110, left = 110)
+        julia_logo = Picture(joinpath(artifact"pptx_data", "assets","julia_logo.png"), top = 110, left = 110)
         push!(s1, julia_logo)
         push!(pres, s1)
         s2 = Slide()
@@ -48,7 +50,7 @@ end
 # TODO: what if the .pptx template already has slides?
 @testset "custom template" begin
     dark_template_name = "no-slides-dark.pptx"
-    dark_template_path = joinpath(PPTX.TEMPLATE_DIR, dark_template_name)
+    dark_template_path = joinpath(artifact"pptx_data", "templates", dark_template_name)
     pres = Presentation(;title="My Presentation")
     s = Slide()
     push!(pres, s)
@@ -93,18 +95,19 @@ end
     # test for issue https://github.com/ASML-Labs/PPTX.jl/issues/20
     mktempdir() do tmpdir
         template_name = "no-slides.pptx"
-        original_template_path = joinpath(PPTX.TEMPLATE_DIR, template_name)
+        original_template_path = joinpath(artifact"pptx_data", "templates", template_name)
         edited_template_path = joinpath(tmpdir, template_name)
         write(edited_template_path, read(original_template_path))
+        chmod(edited_template_path, 0o0100664)
         zip_append_archive(edited_template_path) do w
             # add an existing media directory
             zip_newfile(w, "ppt/media/foo.png")
-            write(w, read(joinpath(PPTX.ASSETS_DIR,"julia_logo.png")))
+            write(w, read(joinpath(artifact"pptx_data", "assets","julia_logo.png")))
         end
 
         pres = Presentation(;title="My Presentation")
         s1 = Slide()
-        julia_logo = Picture(joinpath(PPTX.ASSETS_DIR,"julia_logo.png"), top = 110, left = 110)
+        julia_logo = Picture(joinpath(artifact"pptx_data", "assets","julia_logo.png"), top = 110, left = 110)
         push!(s1, julia_logo)
         push!(pres, s1)
 

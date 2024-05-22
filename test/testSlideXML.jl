@@ -2,6 +2,7 @@ using Test
 using PPTX
 using EzXML
 using ZipArchives: ZipBufferReader, zip_readentry
+using Artifacts
 
 @testset "Slide XML structure" begin
     s = Slide()
@@ -34,7 +35,7 @@ end
 end
 
 @testset "update title in XML" begin
-    template = ZipBufferReader(read(joinpath(PPTX.TEMPLATE_DIR,"no-slides.pptx")))
+    template = ZipBufferReader(read(joinpath(artifact"pptx_data", "templates","no-slides.pptx")))
 
     @testset "slideLayout1.xml" begin
         slide = Slide(;layout=1)

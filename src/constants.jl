@@ -4,6 +4,7 @@ const _EMUS_PER_CM = 360000
 const _EMUS_PER_MM = 36000
 const _EMUS_PER_PT = 12700
 
+const TEMPLATE_DIR = abspath(joinpath(@__DIR__, "..", "templates"))
 const TESTDATA_DIR = abspath(joinpath(@__DIR__, "..", "test/testdata"))
 
 # we use layoutSlide1 for the first title slide, and layoutSlide2 for all other slides

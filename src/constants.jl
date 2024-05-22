@@ -9,3 +9,6 @@ const TESTDATA_DIR = abspath(joinpath(@__DIR__, "..", "test/testdata"))
 # we use layoutSlide1 for the first title slide, and layoutSlide2 for all other slides
 const TITLE_SLIDE_LAYOUT = 1
 const DEFAULT_SLIDE_LAYOUT = 2
+
+include_dependency(joinpath(TEMPLATE_DIR, "tableStyles.xml"))
+const DEFAULT_TABLE_STYLE_DATA = read(joinpath(TEMPLATE_DIR, "tableStyles.xml"))

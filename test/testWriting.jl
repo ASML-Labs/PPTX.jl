@@ -85,6 +85,9 @@ end
         # the dark theme contains this node, which is named "<a:clrScheme name=\"Office\">" in the original theme
         str = zip_readentry(output_zip, theme_file, String)
         @test contains(str, "<a:clrScheme name=\"Office Theme\">")
+
+        # make sure table styles are not empty
+        @test PPTX.DEFAULT_TABLE_STYLE_DATA == zip_readentry(output_zip, "ppt/tableStyles.xml")
     end
 end
 
@@ -94,7 +97,7 @@ end
         template_name = "no-slides.pptx"
         original_template_path = joinpath(artifact"pptx_data", "templates", template_name)
         edited_template_path = joinpath(tmpdir, template_name)
-        cp(original_template_path, edited_template_path)
+        write(edited_template_path, read(original_template_path))
         zip_append_archive(edited_template_path) do w
             # add an existing media directory
             zip_newfile(w, "ppt/media/foo.png")

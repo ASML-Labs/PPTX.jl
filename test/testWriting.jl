@@ -98,6 +98,7 @@ end
         original_template_path = joinpath(artifact"pptx_data", "templates", template_name)
         edited_template_path = joinpath(tmpdir, template_name)
         write(edited_template_path, read(original_template_path))
+        chmod(edited_template_path, 0o0100664)
         zip_append_archive(edited_template_path) do w
             # add an existing media directory
             zip_newfile(w, "ppt/media/foo.png")

@@ -1,7 +1,7 @@
 name = "PPTX"
 uuid = "14a86994-10a4-4a7d-b9ad-ef6f3b1fac6a"
 authors = ["Xander de Vries", "Matthijs Cox"]
-version = "0.7.0"
+version = "0.7.1"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"

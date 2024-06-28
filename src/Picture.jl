@@ -1,4 +1,4 @@
-using FileIO, ImageIO
+using FileIO, ImageIO, UUIDs
 
 """
 ```julia
@@ -46,6 +46,10 @@ struct Picture <: AbstractShape
     size_x::Int
     size_y::Int
     rid::Int
+    _uuid::String
+    function Picture(source::String, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int, rid::Int)
+        new(source, offset_x, offset_y, size_x, size_y, rid, string(UUIDs.uuid4()))
+    end
 end
 
 function Picture(
@@ -127,7 +131,10 @@ end
 function type_schema(p::Picture)
     return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
 end
-filename(p::Picture) = splitpath(p.source)[end]
+function filename(p::Picture) 
+    source_filename, extension = splitext(splitpath(p.source)[end])
+    return "$(source_filename)_$(p._uuid)$extension"
+end
 
 function relationship_xml(p::Picture)
     return Dict(

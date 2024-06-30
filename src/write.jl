@@ -137,18 +137,22 @@ function Base.write(
     p::Presentation;
     overwrite::Bool=false,
     open_ppt::Bool=true,
-    template_path::String=joinpath(TEMPLATE_DIR, "no-slides.pptx"),
+    template_path::Union{String, Vector{UInt8}}=DEFAULT_TEMPLATE_DATA,
 )
+    template_data = if template_path isa AbstractString
+        template_path = abspath(template_path)
+        template_isfile = isfile(template_path)
 
-    template_path = abspath(template_path)
-    template_isfile = isfile(template_path)
-
-    if !template_isfile
-        error(
-            "No file found at template path: $(repr(template_path))",
-        )
+        if !template_isfile
+            error(
+                "No file found at template path: $(repr(template_path))",
+            )
+        end
+        read(template_path)
+    else
+        template_path
     end
-    template_reader = ZipBufferReader(read(template_path))
+    template_reader = ZipBufferReader(template_data)
 
     if !endswith(filepath, ".pptx")
         filepath *= ".pptx"

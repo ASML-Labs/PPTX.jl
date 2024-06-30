@@ -14,3 +14,6 @@ const DEFAULT_SLIDE_LAYOUT = 2
 
 include_dependency(joinpath(TEMPLATE_DIR, "tableStyles.xml"))
 const DEFAULT_TABLE_STYLE_DATA = read(joinpath(TEMPLATE_DIR, "tableStyles.xml"))
+
+include_dependency(joinpath(TEMPLATE_DIR, "no-slides.pptx"))
+const DEFAULT_TEMPLATE_DATA = read(joinpath(TEMPLATE_DIR, "no-slides.pptx"))

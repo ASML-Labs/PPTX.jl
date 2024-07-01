@@ -177,8 +177,8 @@ function make_presentation(p::Presentation)
     return xml_pres
 end
 
-function update_presentation_state!(p::Presentation, ppt_dir=".")
-    doc = readxml(joinpath(ppt_dir, "presentation.xml"))
+function update_presentation_state!(p::Presentation, template::ZipBufferReader)
+    doc = EzXML.parsexml(zip_readentry(template, "ppt/presentation.xml"))
     r = root(doc)
     n = findfirst("//p:sldSz", r)
     cx, cy = n["cx"], n["cy"]

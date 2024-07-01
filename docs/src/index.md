@@ -49,6 +49,10 @@ my_table = Table(df; offset_x=60, offset_y=80, size_x=150, size_y=40)
 push!(s4, my_table)
 push!(pres, s4)
 
+# and what about a nice link in slide 2 to the table-slide
+text = TextBox(; content="Click here to see a nice table", offset_x=100, offset_y=140, size_x=150, size_y=20, hlink = s4)
+push!(s2, text)
+
 pres
 
 # output

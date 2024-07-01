@@ -22,3 +22,6 @@ end
 function _show_string(shape::AbstractShape, compact::Bool)
     return "$(typeof(shape))"
 end
+
+hlink_xml(hlink) = Dict("a:hlinkClick" => Dict("rId" => "rId$(rid(hlink))", "action" => "ppaction://hlinksldjump"))
+has_hyperlink(s::AbstractShape) = hasfield(typeof(s), :hlink) && !isnothing(s.hlink)

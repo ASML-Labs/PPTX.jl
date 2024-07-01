@@ -63,6 +63,7 @@ struct TextBox <: AbstractShape
     offset_y::Int # EMUs
     size_x::Int # EMUs
     size_y::Int # EMUs
+    hlink::Union{Nothing, Any}
     function TextBox(
         content::AbstractString,
         offset_x::Real, # millimeters
@@ -70,6 +71,7 @@ struct TextBox <: AbstractShape
         size_x::Real, # millimeters
         size_y::Real, # millimeters
         style::Dict=Dict("bold" => false, "italic" => false),
+        hlink::Union{Nothing, Any} = nothing
     )
         # input is in mm
         return new(
@@ -78,6 +80,7 @@ struct TextBox <: AbstractShape
             Int(round(offset_y * _EMUS_PER_MM)),
             Int(round(size_x * _EMUS_PER_MM)),
             Int(round(size_y * _EMUS_PER_MM)),
+            hlink
         )
     end
 end
@@ -90,6 +93,7 @@ function TextBox(;
     size_x::Real=40, # millimeters
     size_y::Real=30, # millimeters
     style::Dict=Dict("bold" => false, "italic" => false),
+    hlink::Union{Nothing, Any} = nothing
 )
     return TextBox(
         content,
@@ -98,6 +102,7 @@ function TextBox(;
         size_x,
         size_y,
         style,
+        hlink
     )
 end
 
@@ -130,7 +135,11 @@ function text_style_xml(t::TextBody)
 end
 
 function make_xml(t::TextBox, id::Int=1)
-    cNvPr = Dict("p:cNvPr" => [Dict("id" => "$id"), Dict("name" => "TextBox")])
+    cNvPr = Dict("p:cNvPr" => Dict[Dict("id" => "$id"), Dict("name" => "TextBox")])
+    if has_hyperlink(t)
+        push!(cNvPr["p:cNvPr"], hlink_xml(t.hlink))
+    end
+
     cNvSpPr = Dict("p:cNvSpPr" => Dict("txBox" => "1"))
     nvPr = Dict("p:nvPr" => missing)
 

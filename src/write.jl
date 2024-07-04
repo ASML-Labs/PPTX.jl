@@ -98,6 +98,19 @@ function add_contenttypes!(w::ZipWriter, template::ZipBufferReader)
     zip_commitfile(w)
 end
 
+# Support reading a template from file path or from pre-read file data.
+function read_template(template_path::AbstractString)
+    template_path = abspath(template_path)
+    template_isfile = isfile(template_path)
+    if !template_isfile
+        error(
+            "No file found at template path: $(repr(template_path))",
+        )
+    end
+    read(template_path)
+end
+read_template(template_data::AbstractVector{UInt8}) = template_data
+
 """
 ```julia
 Base.write(
@@ -139,20 +152,7 @@ function Base.write(
     open_ppt::Bool=true,
     template_path::Union{String, Vector{UInt8}}=DEFAULT_TEMPLATE_DATA,
 )
-    template_data = if template_path isa AbstractString
-        template_path = abspath(template_path)
-        template_isfile = isfile(template_path)
-
-        if !template_isfile
-            error(
-                "No file found at template path: $(repr(template_path))",
-            )
-        end
-        read(template_path)
-    else
-        template_path
-    end
-    template_reader = ZipBufferReader(template_data)
+    template_reader = ZipBufferReader(read_template(template_path))
 
     if !endswith(filepath, ".pptx")
         filepath *= ".pptx"

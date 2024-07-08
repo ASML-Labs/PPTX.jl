@@ -1,7 +1,7 @@
 name = "PPTX"
 uuid = "14a86994-10a4-4a7d-b9ad-ef6f3b1fac6a"
 authors = ["Xander de Vries", "Matthijs Cox"]
-version = "0.7.0"
+version = "0.8.0"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"

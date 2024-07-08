@@ -172,6 +172,7 @@ function Base.write(
     mktemp(filedir) do temp_path, temp_out
         ZipWriter(temp_out; own_io=true) do w
             update_presentation_state!(p, template_reader)
+            update_slide_nrs!(p)
             write_relationships!(w, p)
             write_presentation!(w, p)
             write_slides!(w, p, template_reader)

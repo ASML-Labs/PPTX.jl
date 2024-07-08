@@ -42,13 +42,15 @@ mutable struct Slide
     shapes::Vector{AbstractShape}
     rid::Int
     layout::Int
+    slide_nr::Int
     function Slide(
         title::String,
         shapes::Vector{<:AbstractShape},
         rid::Int=0,
         layout::Int=DEFAULT_SLIDE_LAYOUT,
+        slide_nr::Int=0
     )
-        slide = new(title, AbstractShape[], rid, layout)
+        slide = new(title, AbstractShape[], rid, layout, slide_nr)
         for shape in shapes
             push!(slide, shape)
         end
@@ -57,7 +59,7 @@ mutable struct Slide
 end
 shapes(s::Slide) = s.shapes
 rid(s::Slide) = s.rid
-
+slide_nr(s::Slide) = s.slide_nr
 Slide(shapes::Vector{<:AbstractShape}; kwargs...) = Slide(; shapes=shapes, kwargs...)
 
 function Slide(;
@@ -65,8 +67,9 @@ function Slide(;
     shapes::Vector{<:AbstractShape}=AbstractShape[],
     rid::Int=0,
     layout::Int=DEFAULT_SLIDE_LAYOUT,
+    slide_nr::Int=0
 )
-    return Slide(title, shapes, rid, layout)
+    return Slide(title, shapes, rid, layout, slide_nr)
 end
 
 function new_rid(slide::Slide)
@@ -76,6 +79,8 @@ function new_rid(slide::Slide)
         return maximum(rid.(shapes(slide))) + 1
     end
 end
+
+slide_fname(s::Slide) = "slide$(s.slide_nr).xml"
 
 function Base.push!(slide::Slide, shape::AbstractShape)
     if has_rid(shape)
@@ -138,6 +143,20 @@ function init_sptree()::AbstractDict
     )
 end
 
+function type_schema(s::Slide)
+    return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide"
+end
+
+function relationship_xml(s::Slide)
+    return Dict(
+        "Relationship" => [
+            Dict("Id" => "rId$(rid(s))"),
+            Dict("Type" => type_schema(s)),
+            Dict("Target" => slide_fname(s)),
+        ],
+    )
+end
+
 function make_slide_relationships(s::Slide)::AbstractDict
     xml_slide_rels = OrderedDict("Relationships" => Dict[])
     push!(
@@ -159,6 +178,9 @@ function make_slide_relationships(s::Slide)::AbstractDict
     for shape in shapes(s)
         if has_rid(shape)
             push!(xml_slide_rels["Relationships"], relationship_xml(shape))
+        end
+        if has_hyperlink(shape)
+            push!(xml_slide_rels["Relationships"], relationship_xml(shape.hlink))
         end
     end
     return xml_slide_rels

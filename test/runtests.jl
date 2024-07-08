@@ -11,5 +11,6 @@ end
 
 include("testConstructors.jl")
 include("testTables.jl")
+include("testHyperlinks.jl")
 include("testSlideXML.jl")
 include("testWriting.jl")

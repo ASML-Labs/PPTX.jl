@@ -41,7 +41,7 @@ struct Presentation
     function Presentation(slides::Vector{Slide}, author::String, title::String)
         pres = new(title, author, Slide[], PresentationState())
         if isempty(slides)
-            slides = [Slide(; title=title, layout=TITLE_SLIDE_LAYOUT)]
+            slides = [Slide(; title=title, layout=TITLE_SLIDE_LAYOUT, slide_nr = 1)]
         end
         for slide in slides
             push!(pres, slide)
@@ -68,6 +68,7 @@ end
 
 function Base.push!(pres::Presentation, slide::Slide)
     slide.rid = new_rid(pres)
+    slide.slide_nr = length(slides(pres)) + 1
     return push!(slides(pres), slide)
 end
 
@@ -184,4 +185,12 @@ function update_presentation_state!(p::Presentation, template::ZipBufferReader)
     sz = PresentationSize(parse(Int, cx), parse(Int, cy))
     p._state.size = sz
     return nothing
+end
+
+# the slide filename (e.g. slide2.xml) can be used in the slide relationships to enable hyperlinks for example
+# We need to make sure that slide N is also really written to slideN.xml therefore slide numbers are updated just before writing 
+function update_slide_nrs!(p::Presentation)
+    for (index, slide) in enumerate(slides(p))
+        slide.slide_nr = index
+    end
 end

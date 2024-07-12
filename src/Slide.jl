@@ -73,11 +73,8 @@ function Slide(;
 end
 
 function new_rid(slide::Slide)
-    if isempty(shapes(slide))
-        return 2
-    else
-        return maximum(rid.(shapes(slide))) + 1
-    end
+    # When there is no rid shapes the new rid should be 2 else it should be the at least 1 bigger than the shape with the lowest rid.
+    return max(2, maximum(rid.(shapes(slide))) + 1)
 end
 
 slide_fname(s::Slide) = "slide$(s.slide_nr).xml"

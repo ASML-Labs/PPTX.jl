@@ -10,7 +10,15 @@ using ZipArchives:
 import Tables
 import Tables: columns, columnnames, rows
 
+import GridLayoutBase
+import GridLayoutBase: GridLayout, LayoutObservables, BBox
+
+import Observables
+import Observables: Observable
+
 export Presentation, Slide, TextBox, Picture, Table
+
+export ShapeLayout
 
 include("AbstractShape.jl")
 include("constants.jl")
@@ -22,5 +30,6 @@ include("Presentation.jl")
 include("xml_utils.jl")
 include("xml_ppt_utils.jl")
 include("write.jl")
+include("layout.jl")
 
 end

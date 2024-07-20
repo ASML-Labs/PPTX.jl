@@ -59,10 +59,10 @@ TextBox
 """
 struct TextBox <: AbstractShape
     content::TextBody
-    offset_x::Int # EMUs
-    offset_y::Int # EMUs
-    size_x::Int # EMUs
-    size_y::Int # EMUs
+    offset_x::Observable{Int} # EMUs
+    offset_y::Observable{Int} # EMUs
+    size_x::Observable{Int} # EMUs
+    size_y::Observable{Int} # EMUs
     hlink::Union{Nothing, Any}
     function TextBox(
         content::AbstractString,
@@ -76,10 +76,10 @@ struct TextBox <: AbstractShape
         # input is in mm
         return new(
             TextBody(content, style),
-            Int(round(offset_x * _EMUS_PER_MM)),
-            Int(round(offset_y * _EMUS_PER_MM)),
-            Int(round(size_x * _EMUS_PER_MM)),
-            Int(round(size_y * _EMUS_PER_MM)),
+            Observable(Int(round(offset_x * _EMUS_PER_MM))),
+            Observable(Int(round(offset_y * _EMUS_PER_MM))),
+            Observable(Int(round(size_x * _EMUS_PER_MM))),
+            Observable(Int(round(size_y * _EMUS_PER_MM))),
             hlink
         )
     end
@@ -112,10 +112,10 @@ function _show_string(p::TextBox, compact::Bool)
     show_string = "TextBox"
     if !compact
         show_string *= "\n content is \"$(String(p.content))\""
-        show_string *= "\n offset_x is $(p.offset_x) EMUs"
-        show_string *= "\n offset_y is $(p.offset_y) EMUs"
-        show_string *= "\n size_x is $(p.size_x) EMUs"
-        show_string *= "\n size_y is $(p.size_y) EMUs"
+        show_string *= "\n offset_x is $(p.offset_x[]) EMUs"
+        show_string *= "\n offset_y is $(p.offset_y[]) EMUs"
+        show_string *= "\n size_x is $(p.size_x[]) EMUs"
+        show_string *= "\n size_y is $(p.size_y[]) EMUs"
     end
     return show_string
 end
@@ -145,8 +145,8 @@ function make_xml(t::TextBox, id::Int=1)
 
     nvSpPr = Dict("p:nvSpPr" => [cNvPr, cNvSpPr, nvPr])
 
-    offset = Dict("a:off" => [Dict("x" => "$(t.offset_x)"), Dict("y" => "$(t.offset_y)")])
-    extend = Dict("a:ext" => [Dict("cx" => "$(t.size_x)"), Dict("cy" => "$(t.size_y)")])
+    offset = Dict("a:off" => [Dict("x" => "$(t.offset_x[])"), Dict("y" => "$(t.offset_y[])")])
+    extend = Dict("a:ext" => [Dict("cx" => "$(t.size_x[])"), Dict("cy" => "$(t.size_y[])")])
 
     spPr = Dict(
         "p:spPr" => [

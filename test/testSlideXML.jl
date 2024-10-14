@@ -33,6 +33,16 @@ end
     @test layout_relationship["Target"] == "../slideLayouts/slideLayout2.xml"
 end
 
+@testset "rId always bigger than 1 updating on push!" begin
+    s = Slide()
+    push!(s, TextBox("Some text"))
+    @test PPTX.rid(s.shapes[1]) == 0 # textboxes have no rid, so set to 0
+    push!(s, Picture(joinpath(PPTX.ASSETS_DIR,"julia_logo.png")))
+    @test PPTX.rid(s.shapes[2]) == 2
+    push!(s, Picture(joinpath(PPTX.ASSETS_DIR,"cauliflower.jpg")))
+    @test PPTX.rid(s.shapes[3]) == 3
+end
+
 @testset "update title in XML" begin
     template = ZipBufferReader(read(joinpath(PPTX.TEMPLATE_DIR,"no-slides.pptx")))
 

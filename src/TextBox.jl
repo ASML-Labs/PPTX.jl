@@ -123,7 +123,7 @@ end
 function text_style_xml(t::TextBody)
     style = [Dict("lang" => "en-US")]
     if t.style["bold"]
-        push!(stile, Dict("b" => "1"))
+        push!(style, Dict("b" => "1"))
     end
 
     if t.style["italic"]

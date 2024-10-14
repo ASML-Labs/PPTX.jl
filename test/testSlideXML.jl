@@ -74,7 +74,8 @@ end
         slide = Slide(;layout=2, title="my title")
         text_box = TextBox(content="bla")
         push!(slide, text_box)
-        text_box = TextBox(content="bla2")
+        # testing all properties of the TextBox
+        text_box = TextBox(content="content", offset_x=100, offset_y=140, style = Dict("bold" => true, "italic" => true))
         push!(slide, text_box)
         xml = PPTX.make_slide(slide)
         doc = PPTX.xml_document(xml)

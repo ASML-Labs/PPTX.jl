@@ -67,7 +67,7 @@ using Test
         picture_path = joinpath(PPTX.ASSETS_DIR, "cauliflower.jpg")
         p = Presentation([Slide([TextBox(),Picture(picture_path)])])
         @test rid(p.slides[1].shapes[1]) == 0
-        @test rid(p.slides[1].shapes[2]) == 1
+        @test rid(p.slides[1].shapes[2]) == 2
     end
     @testset "Slide" begin
         slide = Slide()

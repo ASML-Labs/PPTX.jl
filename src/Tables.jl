@@ -29,7 +29,7 @@ julia> df = DataFrame(a = [1,2], b = [3,4], c = [5,6])
 
 julia> t = Table(content=df, size_x=30)
 Table
- content isa DataFrame
+ content isa DataFrames.DataFrame
  offset_x is 1800000 EMUs
  offset_y is 1800000 EMUs
  size_x is 1080000 EMUs

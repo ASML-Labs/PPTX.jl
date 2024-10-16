@@ -10,7 +10,7 @@ using ZipArchives:
 import Tables
 import Tables: columns, columnnames, rows
 
-export Presentation, Slide, TextBox, Picture, Table
+export Presentation, Slide, TextBox, TextStyle, Picture, Table
 
 include("AbstractShape.jl")
 include("constants.jl")

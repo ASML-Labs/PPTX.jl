@@ -1,7 +1,7 @@
 name = "PPTX"
 uuid = "14a86994-10a4-4a7d-b9ad-ef6f3b1fac6a"
 authors = ["Xander de Vries", "Matthijs Cox"]
-version = "0.8.1"
+version = "0.9.0"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -30,6 +30,7 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestSetExtensions = "98d24dd4-01ad-11ea-1b02-c9a08f80db04"
 p7zip_jll = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 
 [targets]
-test = ["DataFrames", "Test", "TestSetExtensions", "p7zip_jll"]
+test = ["DataFrames", "Test", "TestSetExtensions", "p7zip_jll", "Documenter"]

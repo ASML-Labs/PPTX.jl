@@ -29,7 +29,7 @@ julia> df = DataFrame(a = [1,2], b = [3,4], c = [5,6])
 
 julia> t = Table(content=df, size_x=30)
 Table
- content isa DataFrames.DataFrame
+ content isa DataFrame
  offset_x is 1800000 EMUs
  offset_y is 1800000 EMUs
  size_x is 1080000 EMUs
@@ -67,10 +67,12 @@ end
 # keyword argument constructor
 function Table(;
     content,
-    offset_x::Real=50, # millimeters
-    offset_y::Real=50, # millimeters
-    size_x::Real=150, # millimeters
-    size_y::Real=100, # millimeters
+    offset=(50,50),
+    offset_x::Real=offset[1], # millimeters
+    offset_y::Real=offset[2], # millimeters
+    size=(150, 100),
+    size_x::Real=size[1], # millimeters
+    size_y::Real=size[2], # millimeters
 )
     return Table(content, offset_x, offset_y, size_x, size_y)
 end

@@ -26,7 +26,11 @@ pres = Presentation(; title="My First PowerPoint")
 s2 = Slide(; title="My First Slide")
 text = TextBox(; content="hello world!", offset_x=100, offset_y=100, size_x=150, size_y=20)
 push!(s2, text)
-text2 = TextBox(; content="here we are again", offset_x=100, offset_y=120, size_x=150, size_y=20)
+text2 = TextBox(;
+    content="here we are again",
+    offset_x=100, offset_y=120, size_x=150, size_y=20,
+    style=(italic=true, fontsize=16)
+)
 push!(s2, text2)
 push!(pres, s2)
 
@@ -50,7 +54,11 @@ push!(s4, my_table)
 push!(pres, s4)
 
 # and what about a nice link in slide 2 to the table-slide
-text = TextBox(; content="Click here to see a nice table", offset_x=100, offset_y=140, size_x=150, size_y=20, hlink = s4)
+text = TextBox(;
+    content="Click here to see a nice table",
+    offset_x=100, offset_y=140, size_x=150, size_y=20,
+    hlink = s4 # link to slide 4
+)
 push!(s2, text)
 
 pres

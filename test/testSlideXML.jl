@@ -4,8 +4,15 @@ using EzXML
 using ZipArchives: ZipBufferReader, zip_readentry
 
 @testset "Slide XML structure" begin
+    text_box = TextBox(content="bla", style = TextStyle(bold = true, italic = true, fontsize = 24))
+    style_xml = PPTX.text_style_xml(text_box.content)
+    @test any(x->get(x, "i", false)=="1", style_xml)
+    @test any(x->get(x, "b", false)=="1", style_xml)
+    @test any(x->get(x, "sz", false)=="2400", style_xml)
+
     s = Slide()
     text_box = TextBox(content="bla")
+
     push!(s, text_box)
     xml = PPTX.make_slide(s)
     @test haskey(xml, "p:sld")

@@ -13,6 +13,20 @@ using Test
 
         @test sprint(show, box) == "TextBox"
 
+        # legacy dict style interface
+        box = TextBox("content"; size_y = 80, style=Dict("italic" => true, "bold" => true, "fontsize" => 24.5))
+        @test box.content.style.fontsize == 24.5
+        @test box.content.style.italic == true
+        @test box.content.style.bold == true
+
+        t = TextStyle(fontsize = 24, italic = true)
+        box2 = TextBox("content"; size_y = 80, style=t)
+        @test box2.content.style == t
+
+        args = (fontsize = 24, italic = true)
+        box2 = TextBox("content"; size_y = 80, style=args)
+        @test box2.content.style == TextStyle(; args...)
+
         io = IOBuffer()
         Base.show(io, MIME"text/plain"(), box)
         show_string = String(take!(io))

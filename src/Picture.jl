@@ -56,8 +56,9 @@ function Picture(
     source::String;
     top::Real=0,
     left::Real=0,
-    offset_x::Real=left,
-    offset_y::Real=top,
+    offset=(left, top),
+    offset_x::Real=offset[1],
+    offset_y::Real=offset[2],
     size::Real=40,
     size_x::Real=size,
     size_y::Union{Nothing, Real}=nothing,

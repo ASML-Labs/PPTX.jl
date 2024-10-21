@@ -99,13 +99,14 @@ function _show_string(p::Picture, compact::Bool)
     return show_string
 end
 
-function make_xml(shape::Picture, id::Int)
+function make_xml(shape::Picture, id::Int, relationship_map::Dict)
     cNvPr = Dict("p:cNvPr" => [Dict("id" => "$id"), Dict("name" => "Picture")])
     cNvPicPr = Dict("p:cNvPicPr" => Dict("a:picLocks" => Dict("noChangeAspect" => "1")))
     nvPr = Dict("p:nvPr" => missing)
     nvPicPr = Dict("p:nvPicPr" => [cNvPr, cNvPicPr, nvPr])
 
-    blip = Dict("a:blip" => Dict("r:embed" => "rId$(rid(shape))"))
+    rel_id = relationship_map[shape]
+    blip = Dict("a:blip" => Dict("r:embed" => "rId$rel_id"))
     stretch = Dict("a:stretch" => Dict("a:fillRect" => missing))
     blipFill = Dict("p:blipFill" => [blip, stretch])
 
@@ -137,10 +138,10 @@ function filename(p::Picture)
     return "$(source_filename)_$(p._uuid)$extension"
 end
 
-function relationship_xml(p::Picture)
+function relationship_xml(p::Picture, r_id::Integer)
     return Dict(
         "Relationship" => [
-            Dict("Id" => "rId$(rid(p))"),
+            Dict("Id" => "rId$r_id"),
             Dict("Type" => type_schema(p)),
             Dict("Target" => "../media/$(filename(p))"),
         ],

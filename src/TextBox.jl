@@ -191,10 +191,10 @@ function text_style_xml(t::TextStyle)
     return style
 end
 
-function make_xml(t::TextBox, id::Int=1)
+function make_xml(t::TextBox, id::Integer, relationship_map::Dict)
     cNvPr = Dict("p:cNvPr" => Dict[Dict("id" => "$id"), Dict("name" => "TextBox")])
     if has_hyperlink(t)
-        push!(cNvPr["p:cNvPr"], hlink_xml(t.hlink))
+        push!(cNvPr["p:cNvPr"], hlink_xml(t.hlink, relationship_map))
     end
 
     cNvSpPr = Dict("p:cNvSpPr" => Dict("txBox" => "1"))

@@ -1,15 +1,35 @@
+"""
+```julia
+TextStyle(
+    bold = false,
+    italic = false,
+    underscore = false,
+    strike = false,
+    fontsize = nothing,
+)
+```
+
+Style of the text inside a `TextBox`
+
+```jldoctest
+julia> style = TextStyle(bold=true)
+
+julia> text = TextBox(content = "hello", style)
+
+```
+
+"""
 Base.@kwdef struct TextStyle
     bold::Bool = false
     italic::Bool = false
+    underscore::Bool = false
+    strike::Bool = false
     fontsize::Union{Nothing, Float64} = nothing # nothing will use default font
 end
 
 function TextStyle(style::AbstractDict{String})
-    return TextStyle(;
-        bold = get(style, "bold", false),
-        italic = get(style, "italic", false),
-        fontsize = get(style, "fontsize", nothing),
-    )
+    kw_pairs = [Symbol(lowercase(k)) => v for (k,v) in style]
+    return TextStyle(; kw_pairs...)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", t::TextStyle)
@@ -82,6 +102,8 @@ function TextBox(;
 
 A TextBox to be used on a Slide.
 Offsets and sizes are in millimeters, but will be converted to EMU.
+
+See `TextStyle` for more text style options.
 
 # Examples
 ```jldoctest
@@ -180,6 +202,14 @@ function text_style_xml(t::TextStyle)
 
     if t.italic
         push!(style, Dict("i" => "1"))
+    end
+
+    if t.underscore
+        push!(style, Dict("u" => "sng"))
+    end
+
+    if t.strike
+        push!(style, Dict("strike" => "sngStrike"))
     end
 
     if !isnothing(t.fontsize)

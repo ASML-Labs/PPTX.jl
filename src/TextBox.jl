@@ -6,15 +6,34 @@ TextStyle(
     underscore = false,
     strike = false,
     fontsize = nothing,
+    color = nothing,
 )
 ```
 
-Style of the text inside a `TextBox`
+Style of the text inside a `TextBox`.
+You can use Colors.jl colorants for the text color, or directly provide a HEX string.
 
 ```jldoctest
-julia> style = TextStyle(bold=true)
+julia> using PPTX, Colors
 
-julia> text = TextBox(content = "hello", style)
+julia> style = TextStyle(bold=true, color=colorant"red")
+TextStyle
+ bold is true
+ italic is false
+ underscore is false
+ strike is false
+ fontsize is nothing
+ color is FF0000
+
+julia> text = TextBox(content = "hello"; style)
+ content is "hello"
+ content.style has
+  bold is true
+  color is FF0000
+ offset_x is 1800000 EMUs
+ offset_y is 1800000 EMUs
+ size_x is 1440000 EMUs
+ size_y is 1080000 EMUs
 
 ```
 
@@ -25,7 +44,12 @@ Base.@kwdef struct TextStyle
     underscore::Bool = false
     strike::Bool = false
     fontsize::Union{Nothing, Float64} = nothing # nothing will use default font
+    color::Union{Nothing, String, Colorant} = nothing # or hex string
 end
+
+hex_color(t::TextStyle) = hex_color(t.color)
+hex_color(c::String) = c
+hex_color(c::Colorant) = hex(c)
 
 function TextStyle(style::AbstractDict{String})
     kw_pairs = [Symbol(lowercase(k)) => v for (k,v) in style]
@@ -37,15 +61,25 @@ function Base.show(io::IO, ::MIME"text/plain", t::TextStyle)
     print_style_properties(io, t)
 end
 
-function print_style_properties(io::IO, t::TextStyle, whitespace::Int=1)
+function print_style_properties(io::IO, t::TextStyle; whitespace::Int=1, only_non_default=false)
     for p in propertynames(t)
-        print(io, "\n" * " "^whitespace * "$p is $(getproperty(t, p))")
+        prop = getproperty(t, p)
+        if only_non_default
+            if isnothing(prop) || prop == false
+                continue
+            end
+        end
+        if p == :color
+            print(io, "\n" * " "^whitespace * "$p is $(hex_color(prop))")
+        else
+            print(io, "\n" * " "^whitespace * "$p is $prop")
+        end
     end
 end
 
 function style_properties_string(t::TextStyle, whitespace::Int=1)
     io = IOBuffer()
-    print_style_properties(io, t, whitespace)
+    print_style_properties(io, t; whitespace, only_non_default=true)
     return String(take!(io))
 end
 
@@ -113,7 +147,6 @@ julia> text = TextBox(content="Hello world!", offset=(100, 50), size=(30,50), st
 TextBox
  content is "Hello world!"
  content.style has
-  bold is false
   italic is true
   fontsize is 24.0
  offset_x is 3600000 EMUs
@@ -195,7 +228,8 @@ function text_style_xml(t::TextBody)
 end
 
 function text_style_xml(t::TextStyle)
-    style = [Dict("lang" => "en-US")]
+    style = Vector{Dict{String}}()
+    push!(style, Dict("lang" => "en-US"))
     if t.bold
         push!(style, Dict("b" => "1"))
     end
@@ -218,6 +252,11 @@ function text_style_xml(t::TextStyle)
     end
 
     push!(style, Dict("dirty" => "0"))
+
+    if !isnothing(t.color)
+        clr = Dict("a:srgbClr" => Dict("val" => t.color))
+        push!(style, Dict("a:solidFill" => clr))
+    end
     return style
 end
 

@@ -1,5 +1,7 @@
 using PPTX
+import PPTX: slides, shapes, rid
 using Test
+using Colors
 
 @testset "constructors" begin
     @testset "TextBox" begin
@@ -22,6 +24,11 @@ using Test
         t = TextStyle(fontsize = 24, italic = true)
         box2 = TextBox("content"; size_y = 80, style=t)
         @test box2.content.style == t
+
+        c = colorant"red"
+        t = TextStyle(color = c)
+        @test t.color == c
+        PPTX.hex_color(t) == hex(c)
 
         args = (fontsize = 24, italic = true)
         box2 = TextBox("content"; size_y = 80, style=args)

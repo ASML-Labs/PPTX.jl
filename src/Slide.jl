@@ -189,14 +189,20 @@ function make_slide_relationships(s::Slide, relationship_map::Dict = slide_relat
             ),
         ),
     )
+    used_r_ids = [1]
     for shape in shapes(s)
+        r_id = 1
         if has_rid(shape)
             r_id = relationship_map[shape]
-            push!(xml_slide_rels["Relationships"], relationship_xml(shape, r_id))
+            r_shape = shape
         end
         if has_hyperlink(shape)
             r_id = relationship_map[shape.hlink]
-            push!(xml_slide_rels["Relationships"], relationship_xml(shape.hlink, r_id))
+            r_shape = shape.hlink
+        end
+        if r_id ∉ used_r_ids
+            push!(xml_slide_rels["Relationships"], relationship_xml(r_shape, r_id))
+            push!(used_r_ids, r_id)
         end
     end
     return xml_slide_rels

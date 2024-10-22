@@ -15,6 +15,11 @@ using Colors
 
         @test sprint(show, box) == "TextBox"
 
+        box = TextBox("content"; linecolor = colorant"black", linewidth = 3, color=colorant"white")
+        @test box.color == hex(colorant"white")
+        @test box.linecolor == hex(colorant"black")
+        @test box.linewidth == 38100 # EMUs
+
         # legacy dict style interface
         box = TextBox("content"; size_y = 80, style=Dict("italic" => true, "bold" => true, "fontsize" => 24.5))
         @test box.content.style.fontsize == 24.5

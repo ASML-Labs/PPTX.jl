@@ -2,6 +2,7 @@ using Test
 using PPTX
 using EzXML
 using ZipArchives: ZipBufferReader, zip_readentry
+using Colors
 
 @testset "Slide XML structure" begin
     text_box = TextBox(content="bla", style = TextStyle(bold = true, italic = true, fontsize = 24))
@@ -11,9 +12,19 @@ using ZipArchives: ZipBufferReader, zip_readentry
     @test any(x->get(x, "sz", false)=="2400", style_xml)
 
     s = Slide()
-    text_box = TextBox(content="bla")
 
+    # add complex text box
+    text_box = TextBox(
+        content="Hello world!",
+        offset=(100, 50),
+        size=(30,50),
+        text_style=(color=colorant"white", bold=true),
+        color=colorant"blue",
+        linecolor=colorant"black",
+        linewidth=3
+    )
     push!(s, text_box)
+
     xml = PPTX.make_slide(s)
     @test haskey(xml, "p:sld")
 

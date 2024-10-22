@@ -50,6 +50,7 @@ end
 hex_color(t::TextStyle) = hex_color(t.color)
 hex_color(c::String) = c
 hex_color(c::Colorant) = hex(c)
+hex_color(::Nothing) = nothing
 
 function TextStyle(style::AbstractDict{String})
     kw_pairs = [Symbol(lowercase(k)) => v for (k,v) in style]
@@ -114,7 +115,7 @@ Base.String(s::TextBody) = s.text
 
 function default_body_properties()
     return [
-        Dict("wrap" => "square"),
+        Dict("wrap" => "none"),
         Dict("rtlCol" => "0"),
         Dict("a:spAutoFit" => missing),
     ]
@@ -124,13 +125,17 @@ end
 ```
 function TextBox(;
     content::String = "",
-    offset = (50,50),
-    offset_x::Real = offset[1], # millimeters
-    offset_y::Real = offset[2], # millimeters
-    size = (40,30),
-    size_x::Real = size[1], # millimeters
-    size_y::Real = size[2], # millimeters
-    style = (italic = false, bold = false, fontsize = nothing),
+    offset = (50,50), # millimeters
+    offset_x = offset[1],
+    offset_y = offset[2],
+    size = (40,30), # millimeters
+    size_x = size[1],
+    size_y = size[2],
+    hlink = nothing, # hyperlink
+    color = nothing, # use hex string, or Colorant
+    linecolor = nothing, # use hex string, or Colorant
+    linewidth = nothing, # use value in points, e.g. 3
+    text_style = (italic = false, bold = false, fontsize = nothing),
 )
 ```
 
@@ -141,20 +146,32 @@ See `TextStyle` for more text style options.
 
 # Examples
 ```jldoctest
-julia> using PPTX
+julia> using PPTX, Colors
 
-julia> text = TextBox(content="Hello world!", offset=(100, 50), size=(30,50), style = (italic = true, fontsize = 24))
+julia> text = TextBox(
+        content="Hello world!",
+        offset=(100, 50),
+        size=(30,50),
+        text_style=(color=colorant"white", bold=true),
+        color=colorant"blue",
+        linecolor=colorant"black",
+        linewidth=3
+    )
 TextBox
  content is "Hello world!"
  content.style has
-  italic is true
-  fontsize is 24.0
+  bold is true
+  color is FFFFFF
  offset_x is 3600000 EMUs
  offset_y is 1800000 EMUs
  size_x is 1080000 EMUs
  size_y is 1800000 EMUs
+ color is 0000FF
+ linecolor is 000000
+ linewidth is 38100 EMUs
 
 ```
+
 """
 struct TextBox<: AbstractShape
     content::TextBody
@@ -163,6 +180,9 @@ struct TextBox<: AbstractShape
     size_x::Int # EMUs
     size_y::Int # EMUs
     hlink::Union{Nothing, Any}
+    color::Union{Nothing, String}
+    linecolor::Union{Nothing, String}
+    linewidth::Union{Nothing, Int}
     function TextBox(
         content::AbstractString,
         offset_x::Real, # millimeters
@@ -170,19 +190,30 @@ struct TextBox<: AbstractShape
         size_x::Real, # millimeters
         size_y::Real, # millimeters
         style = TextStyle(),
-        hlink::Union{Nothing, Any} = nothing
+        hlink::Union{Nothing, Any} = nothing,
+        color::Union{Nothing, String, Colorant} = nothing,
+        linecolor::Union{Nothing, String, Colorant} = nothing,
+        linewidth::Union{Nothing, Real} = 1,
     )
         # input is in mm
         return new(
             TextBody(content, style),
-            Int(round(offset_x * _EMUS_PER_MM)),
-            Int(round(offset_y * _EMUS_PER_MM)),
-            Int(round(size_x * _EMUS_PER_MM)),
-            Int(round(size_y * _EMUS_PER_MM)),
-            hlink
+            mm_to_emu(offset_x),
+            mm_to_emu(offset_y),
+            mm_to_emu(size_x),
+            mm_to_emu(size_y),
+            hlink,
+            hex_color(color),
+            hex_color(linecolor),
+            points_to_emu(linewidth)
         )
     end
 end
+
+mm_to_emu(x) = Int(round(x * _EMUS_PER_MM))
+
+points_to_emu(x::Nothing) = nothing
+points_to_emu(x::Real) = Int(round(x * 12700))
 
 # keyword argument constructor
 function TextBox(;
@@ -193,8 +224,12 @@ function TextBox(;
     size=(40,30),
     size_x::Real=size[1], # millimeters
     size_y::Real=size[2], # millimeters
-    style = TextStyle(),
-    hlink::Union{Nothing, Any}=nothing
+    text_style = TextStyle(),
+    style = text_style,
+    hlink::Union{Nothing, Any}=nothing,
+    color::Union{Nothing, String, Colorant}=nothing,
+    linecolor::Union{Nothing, String, Colorant}=nothing,
+    linewidth::Union{Nothing, Int}=nothing,
 )
     return TextBox(
         content,
@@ -203,7 +238,10 @@ function TextBox(;
         size_x,
         size_y,
         style,
-        hlink
+        hlink,
+        color,
+        linecolor,
+        linewidth,
     )
 end
 
@@ -219,6 +257,15 @@ function _show_string(p::TextBox, compact::Bool)
         show_string *= "\n offset_y is $(p.offset_y) EMUs"
         show_string *= "\n size_x is $(p.size_x) EMUs"
         show_string *= "\n size_y is $(p.size_y) EMUs"
+        if !isnothing(p.color)
+            show_string *= "\n color is $(p.color)"
+        end
+        if !isnothing(p.linecolor)
+            show_string *= "\n linecolor is $(p.linecolor)"
+        end
+        if !isnothing(p.linewidth)
+            show_string *= "\n linewidth is $(p.linewidth) EMUs"
+        end
     end
     return show_string
 end
@@ -251,13 +298,18 @@ function text_style_xml(t::TextStyle)
         push!(style, Dict("sz" => sz))
     end
 
+    # no idea what these do
     push!(style, Dict("dirty" => "0"))
+    push!(style, Dict("err" => "1"))
 
     if !isnothing(t.color)
-        clr = Dict("a:srgbClr" => Dict("val" => t.color))
-        push!(style, Dict("a:solidFill" => clr))
+        push!(style, solid_fill_color(hex_color(t.color)))
     end
     return style
+end
+
+function solid_fill_color(color::String)
+    return Dict("a:solidFill" => Dict("a:srgbClr" => Dict("val" => color)))
 end
 
 function make_xml(t::TextBox, id::Integer, relationship_map::Dict)
@@ -274,13 +326,28 @@ function make_xml(t::TextBox, id::Integer, relationship_map::Dict)
     offset = Dict("a:off" => [Dict("x" => "$(t.offset_x)"), Dict("y" => "$(t.offset_y)")])
     extend = Dict("a:ext" => [Dict("cx" => "$(t.size_x)"), Dict("cy" => "$(t.size_y)")])
 
-    spPr = Dict(
-        "p:spPr" => [
-            Dict("a:xfrm" => [offset, extend]),
-            Dict("a:prstGeomt" => [Dict("prst" => "rect"), Dict("a:avLst" => missing)]),
-            Dict("a:noFill" => missing),
-        ],
-    )
+    spPr_content = [
+        Dict("a:xfrm" => [offset, extend]),
+        Dict("a:prstGeom" => [Dict("prst" => "rect"), Dict("a:avLst" => missing)]),
+    ]
+    if !isnothing(t.color)
+        push!(spPr_content, solid_fill_color(t.color))
+    end
+    if !isnothing(t.linecolor)
+        if isnothing(t.linewidth)
+            w = points_to_emu(1)
+        else
+            w = t.linewidth
+        end
+        push!(spPr_content, Dict("a:ln" => [
+                    Dict("w" => string(w)),
+                    solid_fill_color(t.linecolor)
+                ]
+            )
+        )
+    end
+
+    spPr = Dict("p:spPr" => spPr_content)
 
     txBody = make_textbody_xml(t)
 

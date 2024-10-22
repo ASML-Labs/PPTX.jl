@@ -146,17 +146,20 @@ See `TextStyle` for more text style options.
 
 # Examples
 ```jldoctest
-julia> using PPTX, Colors
+using PPTX, Colors
 
-julia> text = TextBox(
-        content="Hello world!",
-        offset=(100, 50),
-        size=(30,50),
-        text_style=(color=colorant"white", bold=true),
-        color=colorant"blue",
-        linecolor=colorant"black",
-        linewidth=3
-    )
+text = TextBox(
+    content="Hello world!",
+    offset=(100, 50),
+    size=(30,50),
+    text_style=(color=colorant"white", bold=true),
+    color=colorant"blue",
+    linecolor=colorant"black",
+    linewidth=3
+)
+
+# output
+
 TextBox
  content is "Hello world!"
  content.style has

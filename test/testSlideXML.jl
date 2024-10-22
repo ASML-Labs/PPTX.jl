@@ -39,7 +39,10 @@ using Colors
 end
 
 @testset "Slide Relationships XML structure" begin
+    p = Presentation()
+
     s = Slide(;layout=1)
+    push!(p, s)
     xml = PPTX.make_slide_relationships(s)
     # currently hardcoded that 2nd element is the layout
     layout_relationship = xml["Relationships"][2]["Relationship"]
@@ -49,6 +52,25 @@ end
     xml = PPTX.make_slide_relationships(s)
     layout_relationship = xml["Relationships"][2]["Relationship"]
     @test layout_relationship["Target"] == "../slideLayouts/slideLayout2.xml"
+
+    s2 = Slide()
+    push!(p, s2)
+    box = TextBox(content = "slide link", hlink = s2)
+    push!(s, box)
+
+    xml = PPTX.make_slide_relationships(s)
+    slide_rel = xml["Relationships"][3]["Relationship"]
+    @test slide_rel[1]["Id"] == "rId2"
+    @test slide_rel[3]["Target"] == "slide3.xml"
+
+    box2 = TextBox(content = "slide link", hlink = "https://github.com/ASML-Labs/PPTX.jl")
+    push!(s, box2)
+    xml = PPTX.make_slide_relationships(s)
+    url_rel = xml["Relationships"][4]["Relationship"]
+    @test url_rel[1]["Id"] == "rId3"
+    @test url_rel[2]["Type"] == "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+    @test url_rel[3]["Target"] == "https://github.com/ASML-Labs/PPTX.jl"
+    @test url_rel[4]["TargetMode"] == "External"
 end
 
 @testset "rId always bigger than 1 updating on push!" begin

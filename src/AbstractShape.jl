@@ -27,4 +27,9 @@ function hlink_xml(hlink, relationship_map::Dict)
     rel_id = relationship_map[hlink]
     Dict("a:hlinkClick" => Dict("r:id" => "rId$rel_id", "action" => "ppaction://hlinksldjump"))
 end
+# for urls
+function hlink_xml(hlink::String, relationship_map::Dict)
+    rel_id = relationship_map[hlink]
+    Dict("a:hlinkClick" => Dict("r:id" => "rId$rel_id"))
+end
 has_hyperlink(s::AbstractShape) = hasfield(typeof(s), :hlink) && !isnothing(s.hlink)

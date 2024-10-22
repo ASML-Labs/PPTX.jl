@@ -158,8 +158,24 @@ function relationship_xml(s::Slide, r_id::Integer)
     )
 end
 
+function type_schema(url::String)
+    return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
+end
+
+# <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink" Target="https://github.com/ASML-Labs/PPTX.jl" TargetMode="External"/>
+function relationship_xml(url::AbstractString, r_id::Integer)
+    return Dict(
+        "Relationship" => [
+            Dict("Id" => "rId$r_id"),
+            Dict("Type" => type_schema(url)),
+            Dict("Target" => string(url)),
+            Dict("TargetMode" => "External")
+        ],
+    )
+end
+
 function slide_relationship_map(s::Slide)
-    d = Dict{Union{Slide, AbstractShape}, Int}()
+    d = Dict{Union{Slide, AbstractShape, AbstractString}, Int}()
     r_id = 1 # first rid is reserved by slideLayout
     for shape in shapes(s)
         if has_rid(shape) && !haskey(d, shape)

@@ -1,7 +1,7 @@
 using PPTX
 using Documenter
 
-DocMeta.setdocmeta!(PPTX, :DocTestSetup, :(using PPTX, DataFrames); recursive=true)
+DocMeta.setdocmeta!(PPTX, :DocTestSetup, :(using PPTX, DataFrames, Colors); recursive=true)
 
 makedocs(;
     modules=[PPTX],

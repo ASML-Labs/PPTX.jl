@@ -3,8 +3,10 @@
     pres = Presentation()
     s2 = Slide()
     s3 = Slide()
+    s4 = Slide()
 
     box = TextBox(content = "Hyperlinked text", hlink = s3)
+    push!(s2, box)
 
     @testset "has hyperlink" begin
         @test PPTX.has_hyperlink(box)
@@ -13,32 +15,31 @@
     end
 
     @testset "hyperlink xml" begin
-        xml = PPTX.hlink_xml(box.hlink)
-        @test xml["a:hlinkClick"]["rId"] == "rId$(PPTX.rid(s3))"
+        relationship_map = PPTX.slide_relationship_map(s2)
+        @test relationship_map[box.hlink] == 2
+        xml = PPTX.hlink_xml(box.hlink, relationship_map)
+        @test xml["a:hlinkClick"]["r:id"] == "rId2"
     end
 
-    push!(s2, box)
-    push!(pres, s2)
-    push!(pres, s3)
+    # push the same link once more
+    box2 = TextBox(content = "Hyperlinked text", hlink = s3)
+    push!(s2, box2)
 
-    @testset "hyperlink xml after rid update" begin
-        # After updating the rId of s2 the hyperlink xml should also be updated
-        xml = PPTX.hlink_xml(box.hlink)
-        @test xml["a:hlinkClick"]["rId"] == "rId$(PPTX.rid(s3))"
+    @testset "duplicate hyperlink relations" begin
+        relationship_map = PPTX.slide_relationship_map(s2)
+        @test length(relationship_map) == 1
+        @test relationship_map[box2.hlink] == 2
     end
 
-    # I malificently swap slides which should not affect hyperlinking
-    pres.slides[2] = s3
-    pres.slides[3] = s2
+    box3 = TextBox(content = "Hyperlinked text", hlink = s4)
+    push!(s2, box3)
 
-    @testset "update slide nrs" begin
-        PPTX.update_slide_nrs!(pres)
-        @test pres.slides[2].slide_nr == 2
-        @test pres.slides[3].slide_nr == 3
-        xml_rels = PPTX.relationship_xml(box.hlink)
-        # Chech that rId is still the same
-        @test xml_rels["Relationship"][1]["Id"] == "rId$(PPTX.rid(s3))"
-        @test xml_rels["Relationship"][3]["Target"] == "slide$(PPTX.slide_nr(s3)).xml"
+    @testset "multiple hyperlink relations" begin
+        relationship_map = PPTX.slide_relationship_map(s2)
+        @test length(relationship_map) == 2
+        @test relationship_map[box.hlink] == 2
+        @test relationship_map[box2.hlink] == 2
+        @test relationship_map[box3.hlink] == 3
     end
 
 end

@@ -73,7 +73,7 @@ function update_table_style!(w::ZipWriter, template::ZipBufferReader)
     nothing
 end
 
-function add_contenttypes!(w::ZipWriter, template::ZipBufferReader)
+function add_contenttypes!(w::ZipWriter, template::ZipBufferReader, pres::Presentation)
     path = "[Content_Types].xml"
     doc = EzXML.parsexml(zip_readentry(template, path))
     r = root(doc)
@@ -92,6 +92,12 @@ function add_contenttypes!(w::ZipWriter, template::ZipBufferReader)
         # do not add the extension if it is already defined in the template
         isnothing(findfirst(x -> (x.name == "Default" && x["Extension"] == ext), elements(r))) || continue
         addelement!(r, "Default Extension=\"$ext\" ContentType=\"$ct\"")
+    end
+    for slide in pres.slides
+        slide_path = "/ppt/slides/slide$(slide.slide_nr).xml"
+        isnothing(findfirst(x -> (x.name == "Override" && x["PartName"] == slide_path), elements(r))) || continue
+        slide_ct = "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
+        addelement!(r, "Override PartName=\"$slide_path\" ContentType=\"$slide_ct\"")
     end
     zip_newfile(w, path; compress=true)
     prettyprint(w, doc)
@@ -178,7 +184,7 @@ function Base.write(
             write_slides!(w, p, template_reader)
             write_shapes!(w, p)
             update_table_style!(w, template_reader)
-            add_contenttypes!(w, template_reader)
+            add_contenttypes!(w, template_reader, p)
             # copy over any files from the template
             # but don't overwrite any files in w
             for i in zip_nentries(template_reader):-1:1

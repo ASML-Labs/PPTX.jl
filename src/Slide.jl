@@ -160,11 +160,13 @@ end
 
 function slide_relationship_map(s::Slide)
     d = Dict{Union{Slide, AbstractShape}, Int}()
-    for (index, shape) in enumerate(shapes(s))
-        r_id = index+1 # first rid is reserved by slideLayout
-        if has_rid(shape)
+    r_id = 1 # first rid is reserved by slideLayout
+    for shape in shapes(s)
+        if has_rid(shape) && !haskey(d, shape)
+            r_id += 1
             d[shape] = r_id
-        elseif has_hyperlink(shape)
+        elseif has_hyperlink(shape) && !haskey(d, shape.hlink)
+            r_id += 1
             d[shape.hlink] = r_id
         end
     end

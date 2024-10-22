@@ -97,7 +97,7 @@ function _show_string(t::Table, compact::Bool)
     return show_string
 end
 
-function make_xml(t::Table, id::Integer, relationship_map::Dict)
+function make_xml(t::Table, id::Integer, relationship_map::Dict = Dict())
     nvGraphicFramePr = make_nvGraphicFramePr(t, id)
     xfrm = make_xfrm(t)
     tbl = make_xml_table(t)

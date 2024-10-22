@@ -26,6 +26,7 @@ TextStyle
  color is FF0000
 
 julia> text = TextBox(content = "hello"; style)
+TextBox
  content is "hello"
  content.style has
   bold is true

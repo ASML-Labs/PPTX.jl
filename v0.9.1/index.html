@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Home · PPTX.jl</title><meta name="title" content="Home · PPTX.jl"/><meta property="og:title" content="Home · PPTX.jl"/><meta property="twitter:title" content="Home · PPTX.jl"/><meta name="description" content="Documentation for PPTX.jl."/><meta property="og:description" content="Documentation for PPTX.jl."/><meta property="twitter:description" content="Documentation for PPTX.jl."/><script data-outdated-warner src="assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="assets/documenter.js"></script><script src="search_index.js"></script><script src="siteinfo.js"></script><script src="../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>PPTX.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>Home</a><ul class="internal"><li><a class="tocitem" href="#Example-usage"><span>Example usage</span></a></li></ul></li><li><a class="tocitem" href="api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Home</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Home</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ASML-Labs/PPTX.jl/blob/main/docs/src/index.md#" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="PPTX"><a class="docs-heading-anchor" href="#PPTX">PPTX</a><a id="PPTX-1"></a><a class="docs-heading-anchor-permalink" href="#PPTX" title="Permalink"></a></h1><p>Documentation for <a href="https://github.com/ASML-Labs/PPTX.jl">PPTX</a>.</p><p>Interface functions are:</p><ul><li><a href="api/#PPTX.Picture"><code>PPTX.Picture</code></a></li><li><a href="api/#PPTX.Presentation"><code>PPTX.Presentation</code></a></li><li><a href="api/#PPTX.Slide"><code>PPTX.Slide</code></a></li><li><a href="api/#PPTX.Table"><code>PPTX.Table</code></a></li><li><a href="api/#PPTX.TextBox"><code>PPTX.TextBox</code></a></li><li><a href="api/#Base.write-Tuple{String, Presentation}"><code>Base.write</code></a></li></ul><h2 id="Example-usage"><a class="docs-heading-anchor" href="#Example-usage">Example usage</a><a id="Example-usage-1"></a><a class="docs-heading-anchor-permalink" href="#Example-usage" title="Permalink"></a></h2><p>You can build a presentation inside Julia:</p><pre><code class="language-julia hljs">using PPTX, DataFrames
+
+# Lets make a presentation
+# note: this already adds a first slide with the title
+pres = Presentation(; title=&quot;My First PowerPoint&quot;)
+
+# What about a slide with some text
+s2 = Slide(; title=&quot;My First Slide&quot;)
+text = TextBox(; content=&quot;hello world!&quot;, offset_x=100, offset_y=100, size_x=150, size_y=20)
+push!(s2, text)
+text2 = TextBox(;
+    content=&quot;here we are again&quot;,
+    offset_x=100, offset_y=120, size_x=150, size_y=20,
+    style=(italic=true, fontsize=16)
+)
+push!(s2, text2)
+push!(pres, s2)
+
+# Now lets add a picture and some text
+cauli_pic = Picture(joinpath(PPTX.ASSETS_DIR,&quot;cauliflower.jpg&quot;))
+text = TextBox(content=&quot;Look its a vegetable!&quot;)
+s3 = Slide()
+push!(s3, cauli_pic)
+push!(s3, text)
+
+# move picture 100 mm down and 100 mm right
+julia_logo = Picture(joinpath(PPTX.ASSETS_DIR,&quot;julia_logo.png&quot;), offset_x=100, offset_y=100)
+push!(s3, julia_logo)
+push!(pres, s3)
+
+# and what about a table?
+s4 = Slide(; title=&quot;A Table&quot;)
+df = DataFrame(a = [1,2], b = [3,4], c = [5,6])
+my_table = Table(df; offset_x=60, offset_y=80, size_x=150, size_y=40)
+push!(s4, my_table)
+push!(pres, s4)
+
+# and what about a nice link in slide 2 to the table-slide
+text = TextBox(;
+    content=&quot;Click here to see a nice table&quot;,
+    offset_x=100, offset_y=140, size_x=150, size_y=20,
+    hlink = s4 # link to slide 4
+)
+push!(s2, text)
+
+pres
+
+# output
+
+Presentation with 4 slides
+ title is &quot;My First PowerPoint&quot;
+ author is &quot;unknown&quot;
+</code></pre><p>Finally you can write the PPTX file with <code>PPTX.write</code>:</p><pre><code class="language-julia hljs">PPTX.write(&quot;example.pptx&quot;, pres, overwrite = true, open_ppt=true)</code></pre></article><nav class="docs-footer"><a class="docs-footer-nextpage" href="api/">API Reference »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.7.0 on <span class="colophon-date" title="Tuesday 22 October 2024 11:13">Tuesday 22 October 2024</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

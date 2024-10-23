@@ -120,14 +120,21 @@ end
 struct Line
     width::Int
     color::String
-    dash::String
+    dash::String # solid, dot, dash, dashDot, lgDash, lgDashDot, sysDash, sysDashDotDot
     function Line(
         width::Real,
         color::Union{AbstractString, Colorant},
         dash::AbstractString = "solid",
     )
-        return new(points_to_emu(width), hex_color(color), string(dash))
+        return new(points_to_emu(width), hex_color(color), dash_string(dash))
     end
+end
+
+function dash_string(dash::AbstractString)
+    dash = string(dash)
+    values = ["solid", "dot", "dash", "dashDot", "lgDash", "lgDashDot", "sysDash", "sysDashDotDot"]
+    @assert dash in values "unsupported dash value \"$dash\" must be one of $values"
+    return dash
 end
 
 function Line(;
@@ -186,7 +193,9 @@ TableCell(
     content; # text
     textstyle = TextStyle(),
     color = nothing, # background color of the table element
+    anchor = nothing, # anchoring of text in the cell, can be "top", "bottom" or "center"
 )
+```
 
 Create a styled TableCell for use inside a table/dataframe.
 
@@ -206,6 +215,7 @@ struct TableCell
     textbody::TextBody
     color::Union{Nothing, String} # hex color
     lines::TableLines
+    anchor::Union{Nothing, String} # "top", "bottom", "center"
 end
 
 function TableCell(content; kwargs...)
@@ -219,9 +229,10 @@ function TableCell(;
     style = textstyle,
     color::Union{Nothing, String, Colorant} = nothing,
     lines = TableLines(),
+    anchor::Union{Nothing, String} = nothing,
 )
     textbody = TextBody(; text=string(content), style=TextStyle(style), body_properties=nothing)
-    return TableCell(textbody, hex_color(color), TableLines(lines))
+    return TableCell(textbody, hex_color(color), TableLines(lines), anchor)
 end
 
 function has_tc_properties(element::TableCell)
@@ -243,6 +254,9 @@ function Base.show(io::IO, ::MIME"text/plain", t::TableCell)
     end
     if !isnothing(t.color)
         print(io, "\n" * " "^whitespace * "background color is $(t.color)")
+    end
+    if !isnothing(t.anchor)
+        print(io, "\n" * " "^whitespace * "anchor is $(t.anchor)")
     end
 end
 
@@ -455,6 +469,11 @@ end
 function make_table_cell(element::TableCell)
     if has_tc_properties(element)
         tcPr = []
+
+        if !isnothing(element.anchor)
+            push!(tcPr, make_anchor(element))
+        end
+
         lines = element.lines
         if !isnothing(lines.left)
             push!(tcPr, make_xml(lines.left, "L"))
@@ -477,6 +496,21 @@ function make_table_cell(element::TableCell)
     tc_properties = Dict("a:tcPr" => tcPr)
     tc = Dict("a:tc" => [make_textbody_xml(element.textbody, "a"), tc_properties])
     return tc
+end
+
+function make_anchor(t::TableCell)
+    if isnothing(t.anchor)
+        return nothing
+    elseif t.anchor == "center"
+        anchor = "ctr"
+    elseif t.anchor == "top"
+        anchor = "t"
+    elseif t.anchor == "bottom"
+        anchor = "b"
+    else
+        error("unknown table cell anchor \"$(t.anchor)\"")
+    end
+    return Dict("anchor" => anchor)
 end
 
 function make_single_val_extLst(uri::String, type::String, val::Integer = rand(UInt32))

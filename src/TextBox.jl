@@ -7,6 +7,7 @@ TextStyle(
     strike = false,
     fontsize = nothing,
     color = nothing,
+    align = nothing, # "left", "right" or "center"
 )
 ```
 
@@ -24,6 +25,7 @@ TextStyle
  strike is false
  fontsize is nothing
  color is FF0000
+ align is nothing
 
 julia> text = TextBox(content = "hello"; style)
 TextBox
@@ -46,6 +48,7 @@ Base.@kwdef struct TextStyle
     strike::Bool = false
     fontsize::Union{Nothing, Float64} = nothing # nothing will use default font
     color::Union{Nothing, String, Colorant} = nothing # or hex string
+    align::Union{Nothing, String} = nothing # "left", "center", "right"
 end
 
 hex_color(t::TextStyle) = hex_color(t.color)
@@ -379,6 +382,18 @@ function make_xml(t::TextBox, id::Integer, relationship_map::Dict)
 end
 
 function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
+    ap = []
+
+    algn = make_textalign(t.style)
+    if !isnothing(algn)
+        push!(ap, Dict("a:pPr" => algn))
+    end
+
+    ar = Dict(
+        "a:r" => [Dict("a:rPr" => text_style_xml(t)), Dict("a:t" => t)],
+    )
+    push!(ap, ar)
+
     txBody = Dict(
         "$txBodyNameSpace:txBody" => [
             Dict(
@@ -386,9 +401,7 @@ function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
             ),
             Dict("a:lstStyle" => missing),
             Dict(
-                "a:p" => Dict(
-                    "a:r" => [Dict("a:rPr" => text_style_xml(t)), Dict("a:t" => t)],
-                ),
+                "a:p" => ap,
             ),
         ],
     )
@@ -396,3 +409,18 @@ function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
 end
 
 make_textbody_xml(t::TextBox) = make_textbody_xml(t.content)
+
+function make_textalign(t::TextStyle)
+    if isnothing(t.align)
+        return nothing
+    elseif t.align == "center"
+        align = "ctr"
+    elseif t.align == "right"
+        align = "r"
+    elseif t.align == "left"
+        align = "l"
+    else
+        error("unknown text align \"$(t.align)\"")
+    end
+    return Dict("algn" => align)
+end

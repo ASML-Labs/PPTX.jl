@@ -1,5 +1,7 @@
 # Table styling
 
+A few examples on how to style a table.
+
 ## Default table
 
 A table/dataframe with regular values will use the default .pptx table style:
@@ -25,7 +27,7 @@ write("example.pptx", p; overwrite=true)
 
 ## General table styles
 
-You can disable the `header` and the `bandrow`:
+You can disable the `header` (automatically generated from the dataframe column names) and the `bandrow` (the 'banded' or alternating coloring of different rows).
 
 ```julia
 using PPTX, DataFrames
@@ -51,7 +53,11 @@ write("example.pptx", p; overwrite=true)
 
 ## Table element styling
 
-You can overrule the table style per element. For example, let's color one box and add lines around it.
+You can overrule the table style per element.
+
+For example, let's color one box and add lines around it. We'll also center the alignment and anchor (vertical alignment) of the text.
+
+And let's also change the `dash` value. Possible values are "solid", "dot", "dash", "dashDot", "lgDash", "lgDashDot", "sysDash", "sysDashDotDot". Default is "solid".
 
 You may have to fiddle a little with the lines, since neighboring cells have priority.
 
@@ -67,12 +73,11 @@ push!(p, s)
 t4 = TableCell(
     4;
     color=colorant"darkred",
-    textstyle=(color=colorant"white",),
+    textstyle=(color=colorant"white",align="center"),
+    anchor="center",
     lines=(
-        top=(width=3,color=colorant"black"),
         bottom=(width=3,color=colorant"black"),
-        left=(width=3,color=colorant"black"),
-        right=(width=3,color=colorant"black"),
+        right=(width=3,color=colorant"black",dash="sysDash"),
     )
 )
 
@@ -81,7 +86,7 @@ t4 = TableCell(
 t2 = TableCell(
     2;
     lines=(
-        right=(width=3,color=colorant"black"),
+        right=(width=3,color=colorant"black",dash="sysDash"),
     )
 )
 

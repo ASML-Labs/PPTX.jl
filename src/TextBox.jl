@@ -321,9 +321,10 @@ function text_style_xml(t::TextStyle)
         push!(style, Dict("sz" => sz))
     end
 
-    # no idea what these do
+    # no idea what this does
     push!(style, Dict("dirty" => "0"))
-    push!(style, Dict("err" => "1"))
+    # I think this sets the wiggly error notification
+    push!(style, Dict("err" => "0"))
 
     if !isnothing(t.color)
         push!(style, solid_fill_color(hex_color(t.color)))

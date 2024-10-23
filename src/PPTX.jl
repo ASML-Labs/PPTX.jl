@@ -12,7 +12,7 @@ import Tables: columns, columnnames, rows
 
 import Colors: Colorant, hex, @colorant_str
 
-export Presentation, Slide, TextBox, TextStyle, Picture, Table, TableElement
+export Presentation, Slide, TextBox, TextStyle, Picture, Table, TableCell
 
 include("AbstractShape.jl")
 include("constants.jl")

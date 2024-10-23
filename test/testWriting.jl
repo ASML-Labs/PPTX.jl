@@ -58,7 +58,7 @@ end
         content="Hello world!",
         offset=(100, 50),
         size=(30,50),
-        text_style=(color=colorant"white", bold=true),
+        textstyle=(color=colorant"white", bold=true),
         color=colorant"blue",
         linecolor=colorant"black",
         linewidth=3

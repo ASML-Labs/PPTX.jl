@@ -107,6 +107,122 @@ function make_xml(t::Table, id::Integer, relationship_map::Dict = Dict())
     return Dict("p:graphicFrame" => [nvGraphicFramePr, xfrm, graphic])
 end
 
+struct Line
+    width::Int
+    color::String
+    dash::String
+    function Line(
+        width::Real,
+        color::Union{AbstractString, Colorant},
+        dash::AbstractString = "solid",
+    )
+        return new(points_to_emu(width), hex_color(color), string(dash))
+    end
+end
+
+Base.@kwdef struct TableLines
+    left::Union{Nothing, Line} = nothing
+    right::Union{Nothing, Line} = nothing
+    top::Union{Nothing, Line} = nothing
+    bottom::Union{Nothing, Line} = nothing
+end
+
+function has_lines(lines::TableLines)
+    return !isnothing(lines.left) && !isnothing(lines.right) && !isnothing(lines.top) && !isnothing(lines.bottom)
+end
+
+#= example
+<a:lnR w="38100" cap="flat" cmpd="sng" algn="ctr">
+<a:solidFill>
+    <a:srgbClr val="FF0101"/>
+</a:solidFill>
+<a:prstDash val="solid"/>
+<a:round/>
+<a:headEnd type="none" w="med" len="med"/>
+<a:tailEnd type="none" w="med" len="med"/>
+</a:lnR>
+=#
+function make_xml(line::Line, type::String = "R")
+    return Dict("a:ln$type" => [
+        Dict("w" => line.width),
+        Dict("cap" => "flat"),
+        Dict("cmpd" => "sng"),
+        Dict("algn" => "ctr"),
+        solid_fill_color(line.color),
+        Dict("a:prstDash" => Dict("val" => line.dash)),
+        Dict("round" => missing),
+        Dict("a:headEnd" => [Dict("type" => "none"), Dict("w" => "med"), Dict("len" => "med")]),
+        Dict("a:tailEnd" => [Dict("type" => "none"), Dict("w" => "med"), Dict("len" => "med")]),
+        ]
+    )
+end
+
+"""
+```julia
+TableElement(
+    content; # text
+    textstyle = TextStyle(),
+    color = nothing, # background color of the table element
+)
+
+Create a styled TableElement for use inside a table/dataframe.
+
+# Example
+
+```julia
+julia> t = TableElement(4; color = colorant"green", textstyle=(color=colorant"blue",))
+TableElement
+ text is 4
+ textstyle has
+  color is 0000FF
+ background color is 008000
+
+```
+"""
+struct TableElement
+    textbody::TextBody
+    color::Union{Nothing, String} # hex color
+    lines::TableLines
+end
+
+function TableElement(content; kwargs...)
+    return TableElement(;content, kwargs...)
+end
+
+function TableElement(;
+    content,
+    text_style = TextStyle(),
+    textstyle = text_style,
+    style = textstyle,
+    color::Union{Nothing, String, Colorant} = nothing,
+    lines::TableLines = TableLines(),
+)
+    textbody = TextBody(string(content), style)
+    return TableElement(textbody, hex_color(color), lines)
+end
+
+function has_tc_properties(element::TableElement)
+    return !isnothing(element.color) || has_lines(element.lines)
+end
+
+function Base.show(io::IO, t::TableElement)
+    print(io, "TableElement($(t.textbody.text))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", t::TableElement)
+    whitespace = 1
+    print(io, summary(t))
+    text = t.textbody.text
+    print(io, "\n" * " "^whitespace * "text is $text")
+    if has_non_defaults(t.textbody.style)
+        print(io, "\n" * " "^whitespace * "textstyle has" )
+        print_style_properties(io, t.textbody.style; whitespace=whitespace+1, only_non_default=true)
+    end
+    if !isnothing(t.color)
+        print(io, "\n" * " "^whitespace * "background color is $(t.color)")
+    end
+end
+
 #= Example
 <p:nvGraphicFramePr>
     <p:cNvPr id="4" name="Table 4">
@@ -288,14 +404,39 @@ end
 function make_xml_row(row, height::Integer)
     tc_list = []
     for element in row
-        text = PlainTextBody(string(element))
-        tc_properties = Dict("a:tcPr" => missing)
-        tc = Dict("a:tc" => [make_textbody_xml(text, "a"), tc_properties])
+        tc = make_table_element(element)
         push!(tc_list, tc)
     end
     extLst = make_single_val_extLst("{0D108BD9-81ED-4DB2-BD59-A6C34878D82A}", "rowId")
     tr = Dict("a:tr" => [Dict("h" => "$height"), tc_list..., extLst])
     return tr
+end
+
+function make_table_element(element)
+    text = PlainTextBody(string(element))
+    return make_table_element(text)
+end
+
+function make_table_element(text::TextBody)
+    tc_properties = Dict("a:tcPr" => missing)
+    tc = Dict("a:tc" => [make_textbody_xml(text, "a"), tc_properties])
+    return tc
+end
+
+function make_table_element(element::TableElement)
+    if has_tc_properties(element)
+        if !isnothing(element.color)
+            tcPr = [solid_fill_color(element.color)]
+        else
+            tcPr = missing
+        end
+    else
+        tcPr = missing
+    end
+    
+    tc_properties = Dict("a:tcPr" => tcPr)
+    tc = Dict("a:tc" => [make_textbody_xml(element.textbody, "a"), tc_properties])
+    return tc
 end
 
 function make_single_val_extLst(uri::String, type::String, val::Integer = rand(UInt32))

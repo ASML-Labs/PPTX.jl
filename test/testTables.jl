@@ -3,9 +3,13 @@ using Test
 using DataFrames
 using EzXML
 using ZipArchives: ZipBufferReader, zip_readentry
+using Colors
 
 @testset "PPTX Tables from a DataFrame" begin
-    df = DataFrame(a = [1,2], b = [3,4], c = [5,6])
+    t4 = TableElement(4; color = colorant"green")
+    @test PPTX.has_tc_properties(t4)
+
+    df = DataFrame(a = [1,TableElement(2)], b = [3,t4], c = [5,6])
     t = Table(df; offset_x=50, offset_y=50, size_x=200, size_y=150)
     contains(PPTX._show_string(t, false), "content isa DataFrame")
 

@@ -63,6 +63,16 @@ function Base.show(io::IO, ::MIME"text/plain", t::TextStyle)
     print_style_properties(io, t)
 end
 
+function has_non_defaults(t::TextStyle)
+    for p in propertynames(t)
+        prop = getproperty(t, p)
+        if !(isnothing(prop) || prop == false)
+            return true
+        end
+    end
+    return false
+end
+
 function print_style_properties(io::IO, t::TextStyle; whitespace::Int=1, only_non_default=false)
     for p in propertynames(t)
         prop = getproperty(t, p)
@@ -136,7 +146,7 @@ function TextBox(;
     color = nothing, # use hex string, or Colorant
     linecolor = nothing, # use hex string, or Colorant
     linewidth = nothing, # use value in points, e.g. 3
-    text_style = (italic = false, bold = false, fontsize = nothing),
+    textstyle = (italic = false, bold = false, fontsize = nothing),
 )
 ```
 
@@ -153,7 +163,7 @@ text = TextBox(
     content="Hello world!",
     offset=(100, 50),
     size=(30,50),
-    text_style=(color=colorant"white", bold=true),
+    textstyle=(color=colorant"white", bold=true),
     color=colorant"blue",
     linecolor=colorant"black",
     linewidth=3
@@ -229,7 +239,8 @@ function TextBox(;
     size_x::Real=size[1], # millimeters
     size_y::Real=size[2], # millimeters
     text_style = TextStyle(),
-    style = text_style,
+    textstyle = text_style,
+    style = textstyle,
     hlink::Union{Nothing, Any}=nothing,
     color::Union{Nothing, String, Colorant}=nothing,
     linecolor::Union{Nothing, String, Colorant}=nothing,
@@ -255,8 +266,10 @@ function _show_string(p::TextBox, compact::Bool)
     show_string = "TextBox"
     if !compact
         show_string *= "\n content is \"$(String(p.content))\""
-        show_string *= "\n content.style has"
-        show_string *= style_properties_string(p.content.style, 2)
+        if has_non_defaults(p.content.style)
+            show_string *= "\n content.style has"
+            show_string *= style_properties_string(p.content.style, 2)
+        end
         show_string *= "\n offset_x is $(p.offset_x) EMUs"
         show_string *= "\n offset_y is $(p.offset_y) EMUs"
         show_string *= "\n size_x is $(p.size_x) EMUs"

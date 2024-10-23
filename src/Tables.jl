@@ -6,6 +6,8 @@ Table(;
     offset_y::Real = 50,
     size_x::Real = 150,
     size_y::Real = 100,
+    header::Bool = true, # whether to automatically write the columnnames as headers
+    bandrow::Bool = true, # whether to use alternating coloring per row
 )
 ```
 
@@ -43,6 +45,8 @@ struct Table <: AbstractShape
     offset_y::Int # EMUs
     size_x::Int # EMUs
     size_y::Int # EMUs
+    header::Bool
+    bandrow::Bool
     style_id::String
     function Table(
         content,
@@ -50,6 +54,8 @@ struct Table <: AbstractShape
         offset_y::Real, # millimeters
         size_x::Real, # millimeters
         size_y::Real, # millimeters
+        header::Bool = true,
+        bandrow::Bool = true,
         style_id::String="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}",
     )
         # input is in mm
@@ -59,6 +65,8 @@ struct Table <: AbstractShape
             Int(round(offset_y * _EMUS_PER_MM)),
             Int(round(size_x * _EMUS_PER_MM)),
             Int(round(size_y * _EMUS_PER_MM)),
+            header,
+            bandrow,
             style_id,
         )
     end
@@ -73,8 +81,10 @@ function Table(;
     size=(150, 100),
     size_x::Real=size[1], # millimeters
     size_y::Real=size[2], # millimeters
+    header::Bool=true,
+    bandrow::Bool=true,
 )
-    return Table(content, offset_x, offset_y, size_x, size_y)
+    return Table(content, offset_x, offset_y, size_x, size_y, header, bandrow)
 end
 
 Table(content; kwargs...) = Table(; content=content, kwargs...)
@@ -105,6 +115,149 @@ function make_xml(t::Table, id::Integer, relationship_map::Dict = Dict())
     uri = Dict("uri"=>"http://schemas.openxmlformats.org/drawingml/2006/table")
     graphic = Dict("a:graphic" => Dict("a:graphicData" => [uri, tbl]))
     return Dict("p:graphicFrame" => [nvGraphicFramePr, xfrm, graphic])
+end
+
+struct Line
+    width::Int
+    color::String
+    dash::String # solid, dot, dash, dashDot, lgDash, lgDashDot, sysDash, sysDashDotDot
+    function Line(
+        width::Real,
+        color::Union{AbstractString, Colorant},
+        dash::AbstractString = "solid",
+    )
+        return new(points_to_emu(width), hex_color(color), dash_string(dash))
+    end
+end
+
+function dash_string(dash::AbstractString)
+    dash = string(dash)
+    values = ["solid", "dot", "dash", "dashDot", "lgDash", "lgDashDot", "sysDash", "sysDashDotDot"]
+    @assert dash in values "unsupported dash value \"$dash\" must be one of $values"
+    return dash
+end
+
+function Line(;
+    width = 1,
+    color = colorant"black",
+    dash = "solid"
+    )
+    return Line(width, color, dash)
+end
+
+Base.convert(::Type{Line}, x::NamedTuple) = Line(;x...)
+
+Base.@kwdef struct TableLines
+    left::Union{Nothing, Line} = nothing
+    right::Union{Nothing, Line} = nothing
+    top::Union{Nothing, Line} = nothing
+    bottom::Union{Nothing, Line} = nothing
+end
+
+TableLines(t::TableLines) = t
+TableLines(nt::NamedTuple) = TableLines(;nt...)
+
+function has_lines(lines::TableLines)
+    return !isnothing(lines.left) || !isnothing(lines.right) || !isnothing(lines.top) || !isnothing(lines.bottom)
+end
+
+#= example
+<a:lnR w="38100" cap="flat" cmpd="sng" algn="ctr">
+<a:solidFill>
+    <a:srgbClr val="FF0101"/>
+</a:solidFill>
+<a:prstDash val="solid"/>
+<a:round/>
+<a:headEnd type="none" w="med" len="med"/>
+<a:tailEnd type="none" w="med" len="med"/>
+</a:lnR>
+=#
+function make_xml(line::Line, type::String = "R")
+    return Dict("a:ln$type" => [
+        Dict("w" => string(line.width)),
+        Dict("cap" => "flat"),
+        Dict("cmpd" => "sng"),
+        Dict("algn" => "ctr"),
+        solid_fill_color(line.color),
+        Dict("a:prstDash" => Dict("val" => line.dash)),
+        Dict("a:round" => missing),
+        Dict("a:headEnd" => [Dict("type" => "none"), Dict("w" => "med"), Dict("len" => "med")]),
+        Dict("a:tailEnd" => [Dict("type" => "none"), Dict("w" => "med"), Dict("len" => "med")]),
+        ]
+    )
+end
+
+"""
+```julia
+TableCell(
+    content; # text
+    textstyle = TextStyle(),
+    color = nothing, # background color of the table element
+    anchor = nothing, # anchoring of text in the cell, can be "top", "bottom" or "center"
+)
+```
+
+Create a styled TableCell for use inside a table/dataframe.
+
+# Example
+
+```julia
+julia> t = TableCell(4; color = colorant"green", textstyle=(color=colorant"blue",))
+TableCell
+ text is 4
+ textstyle has
+  color is 0000FF
+ background color is 008000
+
+```
+"""
+struct TableCell
+    textbody::TextBody
+    color::Union{Nothing, Missing, String} # hex color
+    lines::TableLines
+    anchor::Union{Nothing, String} # "top", "bottom", "center"
+end
+
+function TableCell(content; kwargs...)
+    return TableCell(;content, kwargs...)
+end
+
+function TableCell(;
+    content,
+    text_style = TextStyle(),
+    textstyle = text_style,
+    style = textstyle,
+    color::Union{Nothing, Missing, String, Colorant} = nothing,
+    lines = TableLines(),
+    anchor::Union{Nothing, String} = nothing,
+)
+    textbody = TextBody(; text=string(content), style=TextStyle(style), body_properties=nothing)
+    return TableCell(textbody, hex_color(color), TableLines(lines), anchor)
+end
+
+function has_tc_properties(element::TableCell)
+    return !isnothing(element.color) || has_lines(element.lines)
+end
+
+function Base.show(io::IO, t::TableCell)
+    print(io, "TableCell($(t.textbody.text))")
+end
+
+function Base.show(io::IO, ::MIME"text/plain", t::TableCell)
+    whitespace = 1
+    print(io, summary(t))
+    text = t.textbody.text
+    print(io, "\n" * " "^whitespace * "text is $text")
+    if has_non_defaults(t.textbody.style)
+        print(io, "\n" * " "^whitespace * "textstyle has" )
+        print_style_properties(io, t.textbody.style; whitespace=whitespace+1, only_non_default=true)
+    end
+    if !isnothing(t.color)
+        print(io, "\n" * " "^whitespace * "background color is $(t.color)")
+    end
+    if !isnothing(t.anchor)
+        print(io, "\n" * " "^whitespace * "anchor is $(t.anchor)")
+    end
 end
 
 #= Example
@@ -212,8 +365,8 @@ end
 function make_tblPr(t::Table)
     tblPr = Dict(
         "a:tblPr" => [
-            Dict("firstRow" => "1"),
-            Dict("bandRow" => "1"),
+            Dict("firstRow" => ppt_bool(t.header)),
+            Dict("bandRow" => ppt_bool(t.bandrow)),
             Dict("a:tableStyleId" => PlainTextBody(t.style_id)),
         ],
     )
@@ -261,11 +414,17 @@ end
 function make_rows(t::Table)::Vector
     tr_list = []
 
-    nr_of_rows = nrows(t) + 1
+    if t.header
+        nr_of_rows = nrows(t) + 1
+    else
+        nr_of_rows = nrows(t)
+    end
     height = t.size_y ÷ nr_of_rows
 
     # we also push the column names as a row
-    push!(tr_list, make_xml_row(Tables.columnnames(t), height))
+    if t.header
+        push!(tr_list, make_xml_row(Tables.columnnames(t), height))
+    end
 
     for row in Tables.rows(t)
         push!(tr_list, make_xml_row(row, height))
@@ -288,14 +447,81 @@ end
 function make_xml_row(row, height::Integer)
     tc_list = []
     for element in row
-        text = PlainTextBody(string(element))
-        tc_properties = Dict("a:tcPr" => missing)
-        tc = Dict("a:tc" => [make_textbody_xml(text, "a"), tc_properties])
+        tc = make_table_cell(element)
         push!(tc_list, tc)
     end
     extLst = make_single_val_extLst("{0D108BD9-81ED-4DB2-BD59-A6C34878D82A}", "rowId")
     tr = Dict("a:tr" => [Dict("h" => "$height"), tc_list..., extLst])
     return tr
+end
+
+function make_table_cell(element)
+    text = PlainTextBody(string(element))
+    return make_table_cell(text)
+end
+
+function make_table_cell(text::TextBody)
+    tc_properties = Dict("a:tcPr" => missing)
+    tc = Dict("a:tc" => [make_textbody_xml(text, "a"), tc_properties])
+    return tc
+end
+
+function make_table_cell(element::TableCell)
+    if has_tc_properties(element)
+        tcPr = []
+
+        if !isnothing(element.anchor)
+            push!(tcPr, make_anchor(element))
+        end
+
+        # TODO: margins
+        # margins set to 0.1 mm PPTX.points_to_emu(x)*10 ?
+        # <a:tcPr marL="36000" marR="36000" marT="36000" marB="36000">
+
+        lines = element.lines
+        if !isnothing(lines.left)
+            push!(tcPr, make_xml(lines.left, "L"))
+        end
+        if !isnothing(lines.right)
+            push!(tcPr, make_xml(lines.right, "R"))
+        end
+        if !isnothing(lines.top)
+            push!(tcPr, make_xml(lines.top, "T"))
+        end
+        if !isnothing(lines.bottom)
+            push!(tcPr, make_xml(lines.bottom, "B"))
+        end
+        if !isnothing(element.color)
+            push!(tcPr, solid_fill_color(element.color))
+        end
+    else
+        tcPr = missing
+    end
+    tc_properties = Dict("a:tcPr" => tcPr)
+    tc = Dict("a:tc" => [make_textbody_xml(element.textbody, "a"), tc_properties])
+    return tc
+end
+
+function solid_fill_color(color::Missing)
+    #<a:solidFill>
+    #    <a:sysClr val="windowText" lastClr="000000"/>
+    #</a:solidFill>
+    return Dict("a:noFill" => missing)
+end
+
+function make_anchor(t::TableCell)
+    if isnothing(t.anchor)
+        return nothing
+    elseif t.anchor == "center"
+        anchor = "ctr"
+    elseif t.anchor == "top"
+        anchor = "t"
+    elseif t.anchor == "bottom"
+        anchor = "b"
+    else
+        error("unknown table cell anchor \"$(t.anchor)\"")
+    end
+    return Dict("anchor" => anchor)
 end
 
 function make_single_val_extLst(uri::String, type::String, val::Integer = rand(UInt32))

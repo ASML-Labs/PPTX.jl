@@ -5,6 +5,17 @@ using ZipArchives: ZipBufferReader, zip_readentry
 using Colors
 
 @testset "Slide XML structure" begin
+    t = PPTX.TextStyle()
+    @test PPTX.make_textalign(t) === nothing
+    t = PPTX.TextStyle(align="center")
+    @test PPTX.make_textalign(t)["algn"] == "ctr"
+    t = PPTX.TextStyle(align="left")
+    @test PPTX.make_textalign(t)["algn"] == "l"
+    t = PPTX.TextStyle(align="right")
+    @test PPTX.make_textalign(t)["algn"] == "r"
+    t = PPTX.TextStyle(align="bla")
+    @test_throws ErrorException("unknown text align \"bla\"") PPTX.make_textalign(t)
+
     text_box = TextBox(content="bla", style = TextStyle(bold = true, italic = true, fontsize = 24))
     style_xml = PPTX.text_style_xml(text_box.content)
     @test any(x->get(x, "i", false)=="1", style_xml)
@@ -18,7 +29,7 @@ using Colors
         content="Hello world!",
         offset=(100, 50),
         size=(30,50),
-        text_style=(color=colorant"white", bold=true),
+        textstyle=(color=colorant"white", bold=true),
         color=colorant"blue",
         linecolor=colorant"black",
         linewidth=3

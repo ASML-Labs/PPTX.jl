@@ -78,3 +78,11 @@ function has_empty_table_list(table_style_doc::EzXML.Document)
     tblStyles = findall("//a:tblStyleLst/a:tblStyle", root(table_style_doc))
     return isnothing(tblStyles) || isempty(tblStyles)
 end
+
+function ppt_bool(b::Bool)
+    if b
+        return "1"
+    else
+        return "0"
+    end
+end

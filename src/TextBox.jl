@@ -7,6 +7,7 @@ TextStyle(
     strike = false,
     fontsize = nothing,
     color = nothing,
+    align = nothing, # "left", "right" or "center"
 )
 ```
 
@@ -24,6 +25,7 @@ TextStyle
  strike is false
  fontsize is nothing
  color is FF0000
+ align is nothing
 
 julia> text = TextBox(content = "hello"; style)
 TextBox
@@ -46,21 +48,39 @@ Base.@kwdef struct TextStyle
     strike::Bool = false
     fontsize::Union{Nothing, Float64} = nothing # nothing will use default font
     color::Union{Nothing, String, Colorant} = nothing # or hex string
+    align::Union{Nothing, String} = nothing # "left", "center", "right"
 end
 
 hex_color(t::TextStyle) = hex_color(t.color)
 hex_color(c::String) = c
 hex_color(c::Colorant) = hex(c)
 hex_color(::Nothing) = nothing
+hex_color(::Missing) = missing
+
+TextStyle(style::TextStyle) = style
 
 function TextStyle(style::AbstractDict{String})
     kw_pairs = [Symbol(lowercase(k)) => v for (k,v) in style]
     return TextStyle(; kw_pairs...)
 end
 
+function TextStyle(nt::NamedTuple)
+    return TextStyle(; nt...)
+end
+
 function Base.show(io::IO, ::MIME"text/plain", t::TextStyle)
     print(io, summary(t))
     print_style_properties(io, t)
+end
+
+function has_non_defaults(t::TextStyle)
+    for p in propertynames(t)
+        prop = getproperty(t, p)
+        if !(isnothing(prop) || prop == false)
+            return true
+        end
+    end
+    return false
 end
 
 function print_style_properties(io::IO, t::TextStyle; whitespace::Int=1, only_non_default=false)
@@ -136,7 +156,7 @@ function TextBox(;
     color = nothing, # use hex string, or Colorant
     linecolor = nothing, # use hex string, or Colorant
     linewidth = nothing, # use value in points, e.g. 3
-    text_style = (italic = false, bold = false, fontsize = nothing),
+    textstyle = (italic = false, bold = false, fontsize = nothing),
 )
 ```
 
@@ -153,7 +173,7 @@ text = TextBox(
     content="Hello world!",
     offset=(100, 50),
     size=(30,50),
-    text_style=(color=colorant"white", bold=true),
+    textstyle=(color=colorant"white", bold=true),
     color=colorant"blue",
     linecolor=colorant"black",
     linewidth=3
@@ -229,7 +249,8 @@ function TextBox(;
     size_x::Real=size[1], # millimeters
     size_y::Real=size[2], # millimeters
     text_style = TextStyle(),
-    style = text_style,
+    textstyle = text_style,
+    style = textstyle,
     hlink::Union{Nothing, Any}=nothing,
     color::Union{Nothing, String, Colorant}=nothing,
     linecolor::Union{Nothing, String, Colorant}=nothing,
@@ -255,8 +276,10 @@ function _show_string(p::TextBox, compact::Bool)
     show_string = "TextBox"
     if !compact
         show_string *= "\n content is \"$(String(p.content))\""
-        show_string *= "\n content.style has"
-        show_string *= style_properties_string(p.content.style, 2)
+        if has_non_defaults(p.content.style)
+            show_string *= "\n content.style has"
+            show_string *= style_properties_string(p.content.style, 2)
+        end
         show_string *= "\n offset_x is $(p.offset_x) EMUs"
         show_string *= "\n offset_y is $(p.offset_y) EMUs"
         show_string *= "\n size_x is $(p.size_x) EMUs"
@@ -302,9 +325,10 @@ function text_style_xml(t::TextStyle)
         push!(style, Dict("sz" => sz))
     end
 
-    # no idea what these do
+    # no idea what this does
     push!(style, Dict("dirty" => "0"))
-    push!(style, Dict("err" => "1"))
+    # I think this sets the wiggly error notification
+    push!(style, Dict("err" => "0"))
 
     if !isnothing(t.color)
         push!(style, solid_fill_color(hex_color(t.color)))
@@ -359,6 +383,18 @@ function make_xml(t::TextBox, id::Integer, relationship_map::Dict)
 end
 
 function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
+    ap = []
+
+    algn = make_textalign(t.style)
+    if !isnothing(algn)
+        push!(ap, Dict("a:pPr" => algn))
+    end
+
+    ar = Dict(
+        "a:r" => [Dict("a:rPr" => text_style_xml(t)), Dict("a:t" => t)],
+    )
+    push!(ap, ar)
+
     txBody = Dict(
         "$txBodyNameSpace:txBody" => [
             Dict(
@@ -366,9 +402,7 @@ function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
             ),
             Dict("a:lstStyle" => missing),
             Dict(
-                "a:p" => Dict(
-                    "a:r" => [Dict("a:rPr" => text_style_xml(t)), Dict("a:t" => t)],
-                ),
+                "a:p" => ap,
             ),
         ],
     )
@@ -376,3 +410,18 @@ function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
 end
 
 make_textbody_xml(t::TextBox) = make_textbody_xml(t.content)
+
+function make_textalign(t::TextStyle)
+    if isnothing(t.align)
+        return nothing
+    elseif t.align == "center"
+        align = "ctr"
+    elseif t.align == "right"
+        align = "r"
+    elseif t.align == "left"
+        align = "l"
+    else
+        error("unknown text align \"$(t.align)\"")
+    end
+    return Dict("algn" => align)
+end

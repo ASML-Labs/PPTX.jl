@@ -213,7 +213,7 @@ TableCell
 """
 struct TableCell
     textbody::TextBody
-    color::Union{Nothing, String} # hex color
+    color::Union{Nothing, Missing, String} # hex color
     lines::TableLines
     anchor::Union{Nothing, String} # "top", "bottom", "center"
 end
@@ -227,7 +227,7 @@ function TableCell(;
     text_style = TextStyle(),
     textstyle = text_style,
     style = textstyle,
-    color::Union{Nothing, String, Colorant} = nothing,
+    color::Union{Nothing, Missing, String, Colorant} = nothing,
     lines = TableLines(),
     anchor::Union{Nothing, String} = nothing,
 )
@@ -474,6 +474,10 @@ function make_table_cell(element::TableCell)
             push!(tcPr, make_anchor(element))
         end
 
+        # TODO: margins
+        # margins set to 0.1 mm PPTX.points_to_emu(x)*10 ?
+        # <a:tcPr marL="36000" marR="36000" marT="36000" marB="36000">
+
         lines = element.lines
         if !isnothing(lines.left)
             push!(tcPr, make_xml(lines.left, "L"))
@@ -496,6 +500,13 @@ function make_table_cell(element::TableCell)
     tc_properties = Dict("a:tcPr" => tcPr)
     tc = Dict("a:tc" => [make_textbody_xml(element.textbody, "a"), tc_properties])
     return tc
+end
+
+function solid_fill_color(color::Missing)
+    #<a:solidFill>
+    #    <a:sysClr val="windowText" lastClr="000000"/>
+    #</a:solidFill>
+    return Dict("a:noFill" => missing)
 end
 
 function make_anchor(t::TableCell)

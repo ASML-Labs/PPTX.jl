@@ -62,11 +62,14 @@ And let's also change the `dash` value. Possible values are "solid", "dot", "das
 You may have to fiddle a little with the lines, since neighboring cells have priority.
 
 ```julia
-using PPTX, Colors, DataFrames
+using PPTX, DataFrames, Colors
 
 p = Presentation()
 s = Slide(title="table example")
 push!(p, s)
+
+# missing color will make the cell transparant
+t1 = TableCell(1; color=missing)
 
 # a red cell with lines on all edges
 # top and left are actually overruled by neighboring cells
@@ -97,7 +100,7 @@ t3 = TableCell(
     )
 )
 
-df = DataFrame(a = [1,t2], b = [t3,t4], c = [5,6])
+df = DataFrame(a = [t1,t2], b = [t3,t4], c = [5,6])
 t = Table(df; offset_x=50, offset_y=50, size_x=80, size_y=60)
 
 push!(s, t)

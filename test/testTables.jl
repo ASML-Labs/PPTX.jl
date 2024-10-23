@@ -24,7 +24,7 @@ using Colors
         lines=(bottom=(width=3,color=colorant"black"),),
         style=(align="center",),
         anchor="center",
-        color=colorant"grey"
+        color=missing,
     )
     @test PPTX.has_tc_properties(t3)
 

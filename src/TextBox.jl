@@ -55,6 +55,7 @@ hex_color(t::TextStyle) = hex_color(t.color)
 hex_color(c::String) = c
 hex_color(c::Colorant) = hex(c)
 hex_color(::Nothing) = nothing
+hex_color(::Missing) = missing
 
 TextStyle(style::TextStyle) = style
 

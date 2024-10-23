@@ -53,6 +53,18 @@ end
     s = Slide()
     push!(pres, s)
 
+    # add complex text box
+    text_box = TextBox(
+        content="Hello world!",
+        offset=(100, 50),
+        size=(30,50),
+        text_style=(color=colorant"white", bold=true),
+        color=colorant"blue",
+        linecolor=colorant"black",
+        linewidth=3
+    )
+    push!(s, text_box)
+
     # error testing
     wrong_path = abspath(joinpath(".", "wrong_path"))
     err_msg = "No file found at template path: $(repr(wrong_path))"

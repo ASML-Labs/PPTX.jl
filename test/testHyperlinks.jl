@@ -42,4 +42,11 @@
         @test relationship_map[box3.hlink] == 3
     end
 
+    box4 = TextBox(content = "PPTX link", hlink = "https://github.com/ASML-Labs/PPTX.jl")
+    push!(s2, box4)
+
+    @testset "external hyperlink" begin
+        relationship_map = PPTX.slide_relationship_map(s2)
+        @test relationship_map[box4.hlink] == 4
+    end
 end

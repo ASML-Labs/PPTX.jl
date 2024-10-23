@@ -10,6 +10,8 @@ using ZipArchives:
 import Tables
 import Tables: columns, columnnames, rows
 
+import Colors: Colorant, hex
+
 export Presentation, Slide, TextBox, TextStyle, Picture, Table
 
 include("AbstractShape.jl")

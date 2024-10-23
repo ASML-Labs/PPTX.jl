@@ -6,6 +6,7 @@ Table(;
     offset_y::Real = 50,
     size_x::Real = 150,
     size_y::Real = 100,
+    header::Bool = true, # whether to automatically write the columnnames as headers
 )
 ```
 
@@ -120,6 +121,16 @@ struct Line
     end
 end
 
+function Line(;
+    width = 1,
+    color = colorant"black",
+    dash = "solid"
+    )
+    return Line(width, color, dash)
+end
+
+Base.convert(::Type{Line}, x::NamedTuple) = Line(;x...)
+
 Base.@kwdef struct TableLines
     left::Union{Nothing, Line} = nothing
     right::Union{Nothing, Line} = nothing
@@ -127,8 +138,11 @@ Base.@kwdef struct TableLines
     bottom::Union{Nothing, Line} = nothing
 end
 
+TableLines(t::TableLines) = t
+TableLines(nt::NamedTuple) = TableLines(;nt...)
+
 function has_lines(lines::TableLines)
-    return !isnothing(lines.left) && !isnothing(lines.right) && !isnothing(lines.top) && !isnothing(lines.bottom)
+    return !isnothing(lines.left) || !isnothing(lines.right) || !isnothing(lines.top) || !isnothing(lines.bottom)
 end
 
 #= example
@@ -144,13 +158,13 @@ end
 =#
 function make_xml(line::Line, type::String = "R")
     return Dict("a:ln$type" => [
-        Dict("w" => line.width),
+        Dict("w" => string(line.width)),
         Dict("cap" => "flat"),
         Dict("cmpd" => "sng"),
         Dict("algn" => "ctr"),
         solid_fill_color(line.color),
         Dict("a:prstDash" => Dict("val" => line.dash)),
-        Dict("round" => missing),
+        Dict("a:round" => missing),
         Dict("a:headEnd" => [Dict("type" => "none"), Dict("w" => "med"), Dict("len" => "med")]),
         Dict("a:tailEnd" => [Dict("type" => "none"), Dict("w" => "med"), Dict("len" => "med")]),
         ]
@@ -195,10 +209,10 @@ function TableElement(;
     textstyle = text_style,
     style = textstyle,
     color::Union{Nothing, String, Colorant} = nothing,
-    lines::TableLines = TableLines(),
+    lines = TableLines(),
 )
-    textbody = TextBody(string(content), style)
-    return TableElement(textbody, hex_color(color), lines)
+    textbody = TextBody(; text=string(content), style=TextStyle(style), body_properties=nothing)
+    return TableElement(textbody, hex_color(color), TableLines(lines))
 end
 
 function has_tc_properties(element::TableElement)
@@ -425,15 +439,26 @@ end
 
 function make_table_element(element::TableElement)
     if has_tc_properties(element)
+        tcPr = []
+        lines = element.lines
+        if !isnothing(lines.left)
+            push!(tcPr, make_xml(lines.left, "L"))
+        end
+        if !isnothing(lines.right)
+            push!(tcPr, make_xml(lines.right, "R"))
+        end
+        if !isnothing(lines.top)
+            push!(tcPr, make_xml(lines.top, "T"))
+        end
+        if !isnothing(lines.bottom)
+            push!(tcPr, make_xml(lines.bottom, "B"))
+        end
         if !isnothing(element.color)
-            tcPr = [solid_fill_color(element.color)]
-        else
-            tcPr = missing
+            push!(tcPr, solid_fill_color(element.color))
         end
     else
         tcPr = missing
     end
-    
     tc_properties = Dict("a:tcPr" => tcPr)
     tc = Dict("a:tc" => [make_textbody_xml(element.textbody, "a"), tc_properties])
     return tc

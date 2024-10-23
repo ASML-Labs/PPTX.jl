@@ -53,9 +53,15 @@ hex_color(c::String) = c
 hex_color(c::Colorant) = hex(c)
 hex_color(::Nothing) = nothing
 
+TextStyle(style::TextStyle) = style
+
 function TextStyle(style::AbstractDict{String})
     kw_pairs = [Symbol(lowercase(k)) => v for (k,v) in style]
     return TextStyle(; kw_pairs...)
+end
+
+function TextStyle(nt::NamedTuple)
+    return TextStyle(; nt...)
 end
 
 function Base.show(io::IO, ::MIME"text/plain", t::TextStyle)

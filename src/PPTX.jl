@@ -10,7 +10,7 @@ using ZipArchives:
 import Tables
 import Tables: columns, columnnames, rows
 
-import Colors: Colorant, hex
+import Colors: Colorant, hex, @colorant_str
 
 export Presentation, Slide, TextBox, TextStyle, Picture, Table, TableElement
 

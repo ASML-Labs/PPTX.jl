@@ -31,7 +31,8 @@ using Colors
         textstyle=(color=:white, bold=true),
         color=:blue,
         linecolor=:black,
-        linewidth=3
+        linewidth=3,
+        rotation=90,
     )
     push!(s, text_box)
 

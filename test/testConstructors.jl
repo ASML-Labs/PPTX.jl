@@ -44,6 +44,12 @@ using Colors
         Base.show(io, MIME"text/plain"(), box)
         show_string = String(take!(io))
         @test contains(show_string, "content is \"$(String(box.content))\"")
+
+        b = TextBox("bla", rotation=-90)
+        @test b.rotation == 270.0
+
+        b = TextBox("bla", rotation=360+45)
+        @test b.rotation == 45.0
     end
     @testset "Picture" begin
         @test_throws ArgumentError pic = Picture("path")

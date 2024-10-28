@@ -192,6 +192,7 @@ function TextBox(;
     color = nothing, # use hex string, or Colorant
     linecolor = nothing, # use hex string, or Colorant
     linewidth = nothing, # use value in points, e.g. 3
+    rotation = nothing, # use a value in degrees, e.g. 90
     textstyle = (italic = false, bold = false, fontsize = nothing),
 )
 ```
@@ -243,6 +244,7 @@ struct TextBox<: AbstractShape
     color::Union{Nothing, String}
     linecolor::Union{Nothing, String}
     linewidth::Union{Nothing, Int}
+    rotation::Union{Nothing, Float64}
     function TextBox(
         content::AbstractString,
         offset_x::Real, # millimeters
@@ -254,6 +256,7 @@ struct TextBox<: AbstractShape
         color = nothing,
         linecolor = nothing,
         linewidth::Union{Nothing, Real} = 1,
+        rotation::Union{Nothing, Real} = nothing,
     )
         # input is in mm
         return new(
@@ -265,7 +268,8 @@ struct TextBox<: AbstractShape
             hlink,
             hex_color(color),
             hex_color(linecolor),
-            points_to_emu(linewidth)
+            points_to_emu(linewidth),
+            rotation_value(rotation),
         )
     end
 end
@@ -276,6 +280,11 @@ mm_to_emu(x::AbstractArray{<:Real}) = mm_to_emu.(x)
 
 points_to_emu(x::Nothing) = nothing
 points_to_emu(x::Real) = Int(round(x * 12700))
+
+rotation_value(::Nothing) = nothing
+function rotation_value(x::Real)
+    return mod(Float64(x), 360.0)
+end
 
 # keyword argument constructor
 function TextBox(;
@@ -293,6 +302,7 @@ function TextBox(;
     color=nothing,
     linecolor=nothing,
     linewidth::Union{Nothing, Int}=nothing,
+    rotation::Union{Nothing, Real}=nothing,
 )
     return TextBox(
         content,
@@ -305,6 +315,7 @@ function TextBox(;
         hex_color(color),
         hex_color(linecolor),
         linewidth,
+        rotation,
     )
 end
 
@@ -330,6 +341,9 @@ function _show_string(p::TextBox, compact::Bool)
         end
         if !isnothing(p.linewidth)
             show_string *= "\n linewidth is $(p.linewidth) EMUs"
+        end
+        if !isnothing(p.rotation)
+            show_string *= "\n rotation is $(p.rotation) degrees"
         end
     end
     return show_string
@@ -397,11 +411,18 @@ function make_xml(t::TextBox, id::Integer, relationship_map::Dict)
 
     nvSpPr = Dict("p:nvSpPr" => [cNvPr, cNvSpPr, nvPr])
 
+    xfrm = []
+    if !isnothing(t.rotation)
+        # degrees * 60000 apparently
+        push!(xfrm, Dict("rot" => string(Int(t.rotation*60_000))))
+    end
     offset = Dict("a:off" => [Dict("x" => "$(t.offset_x)"), Dict("y" => "$(t.offset_y)")])
+    push!(xfrm, offset)
     extend = Dict("a:ext" => [Dict("cx" => "$(t.size_x)"), Dict("cy" => "$(t.size_y)")])
+    push!(xfrm, extend)
 
     spPr_content = [
-        Dict("a:xfrm" => [offset, extend]),
+        Dict("a:xfrm" => xfrm),
         Dict("a:prstGeom" => [Dict("prst" => "rect"), Dict("a:avLst" => missing)]),
     ]
     if !isnothing(t.color)

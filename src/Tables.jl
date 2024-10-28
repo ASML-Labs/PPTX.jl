@@ -17,6 +17,8 @@ The content can be anything that adheres to a `Tables.jl` interface.
 
 Offsets and sizes are in millimeters, but will be converted to EMU.
 
+To style each cell individually see `TableCell`.
+
 # Examples
 ```jldoctest
 julia> using PPTX, DataFrames
@@ -81,7 +83,7 @@ function Table(;
     size=(150, 100),
     size_x::Real=size[1], # millimeters
     size_y::Real=size[2], # millimeters
-    header::Bool=true,
+    header::Bool=header_default(content),
     bandrow::Bool=true,
 )
     return Table(content, offset_x, offset_y, size_x, size_y, header, bandrow)
@@ -89,11 +91,21 @@ end
 
 Table(content; kwargs...) = Table(; content=content, kwargs...)
 
+header_default(x) = true
+header_default(x::AbstractArray) = false
+
 Tables.columnnames(t::Table) = Tables.columnnames(t.content)
-Tables.columns(t::Table) = Tables.columns(t.content)
-Tables.rows(t::Table) = Tables.rows(t.content)
-ncols(t::Table) = length(Tables.columns(t))
-nrows(t::Table) = length(Tables.rows(t))
+Tables.columns(t::Table) = get_columns(t.content)
+Tables.rows(t::Table) = get_rows(t.content)
+ncols(t::Table) = length(get_columns(t))
+nrows(t::Table) = length(get_rows(t))
+
+get_columns(t::Table) = get_columns(t.content)
+get_columns(t) = Tables.columns(t)
+get_columns(m::AbstractMatrix) = eachcol(m)
+get_rows(t::Table) = get_rows(t.content)
+get_rows(t) = Tables.rows(t)
+get_rows(m::AbstractMatrix) = eachrow(m)
 
 function _show_string(t::Table, compact::Bool)
     show_string = "Table"
@@ -123,14 +135,14 @@ struct Line
     dash::String # solid, dot, dash, dashDot, lgDash, lgDashDot, sysDash, sysDashDotDot
     function Line(
         width::Real,
-        color::Union{AbstractString, Colorant},
+        color,
         dash::AbstractString = "solid",
     )
         return new(points_to_emu(width), hex_color(color), dash_string(dash))
     end
 end
 
-function dash_string(dash::AbstractString)
+function dash_string(dash)
     dash = string(dash)
     values = ["solid", "dot", "dash", "dashDot", "lgDash", "lgDashDot", "sysDash", "sysDashDotDot"]
     @assert dash in values "unsupported dash value \"$dash\" must be one of $values"
@@ -142,7 +154,7 @@ function Line(;
     color = colorant"black",
     dash = "solid"
     )
-    return Line(width, color, dash)
+    return Line(width, color, dash_string(dash))
 end
 
 Base.convert(::Type{Line}, x::NamedTuple) = Line(;x...)
@@ -187,6 +199,51 @@ function make_xml(line::Line, type::String = "R")
     )
 end
 
+struct Margins
+    left::Union{Nothing, Int}
+    right::Union{Nothing, Int}
+    top::Union{Nothing, Int}
+    bottom::Union{Nothing, Int}
+end
+
+function Margins(;
+    left = nothing,
+    right = nothing,
+    top = nothing,
+    bottom = nothing,
+    )
+    return Margins(margin(left), margin(right), margin(top), margin(bottom))
+end
+
+Margins(t::Margins) = t
+Margins(nt::NamedTuple) = Margins(;nt...)
+
+margin(::Nothing) = nothing
+margin(x) = mm_to_emu(x*10)
+
+function has_margins(m::Margins)
+    return !isnothing(m.left) || !isnothing(m.right) || !isnothing(m.top) || !isnothing(m.bottom) 
+end
+
+# margins set to 0.1 mm PPTX.points_to_emu(x)*10 ?
+# <a:tcPr marL="36000" marR="36000" marT="36000" marB="36000">
+function make_xml(m::Margins)
+    attr = []
+    if !isnothing(m.left)
+        push!(attr, Dict("marL" => string(m.left)))
+    end
+    if !isnothing(m.right)
+        push!(attr, Dict("marR" => string(m.right)))
+    end
+    if !isnothing(m.top)
+        push!(attr, Dict("marT" => string(m.top)))
+    end
+    if !isnothing(m.bottom)
+        push!(attr, Dict("marB" => string(m.bottom)))
+    end
+    return attr
+end
+
 """
 ```julia
 TableCell(
@@ -194,6 +251,8 @@ TableCell(
     textstyle = TextStyle(),
     color = nothing, # background color of the table element
     anchor = nothing, # anchoring of text in the cell, can be "top", "bottom" or "center"
+    lines,
+    margins,
 )
 ```
 
@@ -202,7 +261,7 @@ Create a styled TableCell for use inside a table/dataframe.
 # Example
 
 ```julia
-julia> t = TableCell(4; color = colorant"green", textstyle=(color=colorant"blue",))
+julia> t = TableCell(4; color = :green, textstyle=(color=:blue,))
 TableCell
  text is 4
  textstyle has
@@ -216,6 +275,8 @@ struct TableCell
     color::Union{Nothing, Missing, String} # hex color
     lines::TableLines
     anchor::Union{Nothing, String} # "top", "bottom", "center"
+    direction::Union{Nothing, String} # "vert" or "vert270", nothing gives horizontal
+    margins::Margins
 end
 
 function TableCell(content; kwargs...)
@@ -227,16 +288,41 @@ function TableCell(;
     text_style = TextStyle(),
     textstyle = text_style,
     style = textstyle,
-    color::Union{Nothing, Missing, String, Colorant} = nothing,
+    color = nothing,
     lines = TableLines(),
-    anchor::Union{Nothing, String} = nothing,
+    anchor = nothing,
+    direction = nothing,
+    margins = Margins(),
 )
     textbody = TextBody(; text=string(content), style=TextStyle(style), body_properties=nothing)
-    return TableCell(textbody, hex_color(color), TableLines(lines), anchor)
+    return TableCell(
+        textbody,
+        hex_color(color),
+        TableLines(lines),
+        anchor_string(anchor),
+        text_direction(direction),
+        Margins(margins)
+    )
 end
 
-function has_tc_properties(element::TableCell)
-    return !isnothing(element.color) || has_lines(element.lines)
+function has_tc_properties(c::TableCell)
+    return !isnothing(c.color) || has_lines(c.lines)
+end
+
+has_margins(c::TableCell) = has_margins(c.margins)
+
+anchor_string(::Nothing) = nothing
+function anchor_string(x)
+    s = string(x)
+    @assert s in ("top", "bottom", "center") "unknown table cell anchor $s, must be top, bottom or center"
+    return s
+end
+
+text_direction(::Nothing) = nothing
+function text_direction(x)
+    s = string(x)
+    @assert s in ("vert", "vert270")
+    return s
 end
 
 function Base.show(io::IO, t::TableCell)
@@ -474,9 +560,14 @@ function make_table_cell(element::TableCell)
             push!(tcPr, make_anchor(element))
         end
 
-        # TODO: margins
-        # margins set to 0.1 mm PPTX.points_to_emu(x)*10 ?
-        # <a:tcPr marL="36000" marR="36000" marT="36000" marB="36000">
+        if has_margins(element)
+            append!(tcPr, make_xml(element.margins))
+        end
+
+        # <a:tcPr vert="vert"> or <a:tcPr vert="vert270">
+        if !isnothing(element.direction)
+            push!(tcPr, Dict("vert" => element.direction))
+        end
 
         lines = element.lines
         if !isnothing(lines.left)

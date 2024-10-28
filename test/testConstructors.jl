@@ -15,7 +15,7 @@ using Colors
 
         @test sprint(show, box) == "TextBox"
 
-        box = TextBox("content"; linecolor = colorant"black", linewidth = 3, color=colorant"white")
+        box = TextBox("content"; linecolor = :black, linewidth = 3, color=:white)
         @test box.color == hex(colorant"white")
         @test box.linecolor == hex(colorant"black")
         @test box.linewidth == 38100 # EMUs
@@ -26,13 +26,14 @@ using Colors
         @test box.content.style.italic == true
         @test box.content.style.bold == true
 
-        t = TextStyle(fontsize = 24, italic = true)
+        t = TextStyle(fontsize = 24, italic = true, align=:center)
+        @test t.align == "center"
         box2 = TextBox("content"; size_y = 80, style=t)
         @test box2.content.style == t
 
         c = colorant"red"
-        t = TextStyle(color = c)
-        @test t.color == c
+        t = TextStyle(color = :red)
+        @test t.color == hex(c)
         PPTX.hex_color(t) == hex(c)
 
         args = (fontsize = 24, italic = true)

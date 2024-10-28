@@ -6,18 +6,18 @@ TextStyle(
     underscore = false,
     strike = false,
     fontsize = nothing,
-    color = nothing,
+    color = nothing, # anything compliant with Colors.jl
     align = nothing, # "left", "right" or "center"
 )
 ```
 
 Style of the text inside a `TextBox`.
-You can use Colors.jl colorants for the text color, or directly provide a HEX string.
+You can use Colors.jl colorants for the text color, or directly provide a HEX string, or a symbol like :white.
 
 ```jldoctest
-julia> using PPTX, Colors
+julia> using PPTX
 
-julia> style = TextStyle(bold=true, color=colorant"red")
+julia> style = TextStyle(bold=true, color=:red)
 TextStyle
  bold is true
  italic is false
@@ -41,21 +41,52 @@ TextBox
 ```
 
 """
-Base.@kwdef struct TextStyle
-    bold::Bool = false
-    italic::Bool = false
-    underscore::Bool = false
-    strike::Bool = false
-    fontsize::Union{Nothing, Float64} = nothing # nothing will use default font
-    color::Union{Nothing, String, Colorant} = nothing # or hex string
-    align::Union{Nothing, String} = nothing # "left", "center", "right"
+struct TextStyle
+    bold::Bool
+    italic::Bool
+    underscore::Bool
+    strike::Bool
+    fontsize::Union{Nothing, Float64}
+    color::Union{Nothing, String}
+    align::Union{Nothing, String}
 end
+
+function TextStyle(;
+    bold::Bool = false,
+    italic::Bool = false,
+    underscore::Bool = false,
+    strike::Bool = false,
+    fontsize = nothing, # nothing will use default font
+    color = nothing, # hex string
+    align = nothing, # "left", "center", "right"
+    )
+    return TextStyle(
+        bold,
+        italic,
+        underscore,
+        strike,
+        parse_fontsize(fontsize),
+        hex_color(color),
+        align_string(align),
+    )
+end
+
+parse_fontsize(::Nothing) = nothing
+parse_fontsize(x::Real) = Float64(x)
 
 hex_color(t::TextStyle) = hex_color(t.color)
 hex_color(c::String) = c
 hex_color(c::Colorant) = hex(c)
 hex_color(::Nothing) = nothing
 hex_color(::Missing) = missing
+hex_color(c::Symbol) = hex(parse(Colorant, c))
+
+align_string(::Nothing) = nothing
+function align_string(x)
+    s = string(x)
+    @assert s in ("left", "center", "right") "unknown text align $s, must be left, center or right"
+    return s
+end
 
 TextStyle(style::TextStyle) = style
 
@@ -167,15 +198,15 @@ See `TextStyle` for more text style options.
 
 # Examples
 ```jldoctest
-using PPTX, Colors
+using PPTX
 
 text = TextBox(
     content="Hello world!",
     offset=(100, 50),
     size=(30,50),
-    textstyle=(color=colorant"white", bold=true),
-    color=colorant"blue",
-    linecolor=colorant"black",
+    textstyle=(color=:white, bold=true),
+    color=:blue,
+    linecolor=:black,
     linewidth=3
 )
 
@@ -215,8 +246,8 @@ struct TextBox<: AbstractShape
         size_y::Real, # millimeters
         style = TextStyle(),
         hlink::Union{Nothing, Any} = nothing,
-        color::Union{Nothing, String, Colorant} = nothing,
-        linecolor::Union{Nothing, String, Colorant} = nothing,
+        color = nothing,
+        linecolor = nothing,
         linewidth::Union{Nothing, Real} = 1,
     )
         # input is in mm
@@ -248,12 +279,12 @@ function TextBox(;
     size=(40,30),
     size_x::Real=size[1], # millimeters
     size_y::Real=size[2], # millimeters
-    text_style = TextStyle(),
-    textstyle = text_style,
-    style = textstyle,
+    text_style=TextStyle(),
+    textstyle=text_style,
+    style=textstyle,
     hlink::Union{Nothing, Any}=nothing,
-    color::Union{Nothing, String, Colorant}=nothing,
-    linecolor::Union{Nothing, String, Colorant}=nothing,
+    color=nothing,
+    linecolor=nothing,
     linewidth::Union{Nothing, Int}=nothing,
 )
     return TextBox(
@@ -264,8 +295,8 @@ function TextBox(;
         size_y,
         style,
         hlink,
-        color,
-        linecolor,
+        hex_color(color),
+        hex_color(linecolor),
         linewidth,
     )
 end

@@ -5,26 +5,44 @@ using EzXML
 using ZipArchives: ZipBufferReader, zip_readentry
 using Colors
 
+@testset "PPTX Tables from a Matrix" begin
+    t = Table(rand(3,2))
+    @test t.header == false
+
+    @test PPTX.ncols(t) == 2
+    @test PPTX.nrows(t) == 3
+end
+
 @testset "PPTX Tables from a DataFrame" begin
     lines = PPTX.TableLines(left=(width=1,))
     @test lines.left.width == 12700 # EMUs
 
-    @test_throws AssertionError PPTX.TableLines(left=(width=1,dash="dashss"))
+    @test_throws AssertionError PPTX.TableLines(left=(width=1,dash=:dashss))
 
-    nt = (left=(width=1,), top=(color=colorant"green",))
+    nt = (left=(width=1,), top=(color=:green,))
     lines = PPTX.TableLines(nt)
     @test lines.left.width == 12700 # EMUs
     @test lines.top.color == hex(colorant"green")
 
-    t4 = TableCell(4; color = colorant"green", lines = nt)
+    t_margins = TableCell(3; margins=(bottom=0.1,))
+    @test PPTX.has_margins(t_margins)
+    @test t_margins.margins.bottom == 36000
+    @test t_margins.margins.left === nothing
+
+    @test TableCell(4; color = :green).color == hex(colorant"green")
+
+    t4 = TableCell(4; color = :green, lines = nt)
+    @test lines.top.color == hex(colorant"green")
     @test PPTX.has_tc_properties(t4)
+    @test !PPTX.has_margins(t4)
 
     t3 = TableCell(
         3;
-        lines=(bottom=(width=3,color=colorant"black"),),
-        style=(align="center",),
-        anchor="center",
+        lines=(bottom=(width=3,color=:black),),
+        style=(align=:center,),
+        anchor=:center,
         color=missing,
+        margins=(bottom=0.1,)
     )
     @test PPTX.has_tc_properties(t3)
 
@@ -91,8 +109,11 @@ end
     @test PPTX.make_anchor(t)["anchor"] == "b"
 
     msg = "unknown table cell anchor \"bla\""
-    t = TableCell(1; anchor="bla")
-    @test_throws ErrorException(msg) PPTX.make_anchor(t)
+    @test_throws AssertionError TableCell(1; anchor="bla")
+end
+
+@testset "TableCell direction" begin
+
 end
 
 @testset "check empty table style list" begin

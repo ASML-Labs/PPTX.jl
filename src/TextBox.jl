@@ -6,6 +6,7 @@ TextStyle(
     underscore = false,
     strike = false,
     fontsize = nothing,
+    typeface = nothing, # or a string, like \"Courier New\"
     color = nothing, # anything compliant with Colors.jl
     align = nothing, # "left", "right" or "center"
 )
@@ -24,6 +25,7 @@ TextStyle
  underscore is false
  strike is false
  fontsize is nothing
+ typeface is nothing
  color is FF0000
  align is nothing
 
@@ -47,6 +49,7 @@ struct TextStyle
     underscore::Bool
     strike::Bool
     fontsize::Union{Nothing, Float64}
+    typeface::Union{Nothing, String}
     color::Union{Nothing, String}
     align::Union{Nothing, String}
 end
@@ -57,6 +60,7 @@ function TextStyle(;
     underscore::Bool = false,
     strike::Bool = false,
     fontsize = nothing, # nothing will use default font
+    typeface = nothing, # exact string of the type face
     color = nothing, # hex string
     align = nothing, # "left", "center", "right"
     )
@@ -66,6 +70,7 @@ function TextStyle(;
         underscore,
         strike,
         parse_fontsize(fontsize),
+        typeface,
         hex_color(color),
         align_string(align),
     )
@@ -366,6 +371,14 @@ function text_style_xml(t::TextStyle)
     if !isnothing(t.color)
         push!(style, solid_fill_color(hex_color(t.color)))
     end
+
+    # there's a lot going on here, but seems only providing the latin typeface is sufficient
+    #<a:latin typeface="Courier New" panose="02070309020205020404" pitchFamily="49" charset="0"/>
+    #<a:cs typeface="Courier New" panose="02070309020205020404" pitchFamily="49" charset="0"/>
+    if !isnothing(t.typeface)
+        push!(style, Dict("a:latin" => Dict("typeface" => string(t.typeface))))
+    end
+
     return style
 end
 

@@ -20,7 +20,7 @@ Plots.savefig(f, "my_plot.png")
 my_picture = Picture("my_plot.png", offset = (50,50), size = 160)
 push!(s, my_picture)
 
-t = TextBox("Code used:", offset = (210,90), textstyle = (bold=true,))
+t = TextBox("Code used:", offset = (210,70), textstyle = (bold=true,))
 push!(s, t)
 
 text = """
@@ -28,7 +28,7 @@ x = range(0, 10, length=100)
 y = sin.(x)
 f = plot(x, y)
 """
-t = TextBox(text, offset = (215,100), size = (80,27), color = :lightgrey)
+t = TextBox(text, offset = (215,80), size = (110,27), color = :lightgrey, textstyle = (typeface = "Courier New",))
 push!(s, t)
 
 write("example.pptx", p; overwrite=true)
@@ -66,7 +66,7 @@ x = range(0, 10, length=100)
 y = sin.(x)
 lines!(ax, x, y)
 """
-t = TextBox(text, offset = (215,80), size = (80,45), color = :lightgrey)
+t = TextBox(text, offset = (215,80), size = (110,45), color = :lightgrey, textstyle = (typeface = "Courier New",))
 push!(s, t)
 
 write("example.pptx", p; overwrite=true)

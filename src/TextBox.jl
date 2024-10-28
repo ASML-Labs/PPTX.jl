@@ -141,10 +141,60 @@ function style_properties_string(t::TextStyle, whitespace::Int=1)
     return String(take!(io))
 end
 
+
+struct Margins
+    left::Union{Nothing, Int}
+    right::Union{Nothing, Int}
+    top::Union{Nothing, Int}
+    bottom::Union{Nothing, Int}
+end
+
+function Margins(;
+    left = nothing,
+    right = nothing,
+    top = nothing,
+    bottom = nothing,
+    )
+    return Margins(margin(left), margin(right), margin(top), margin(bottom))
+end
+
+Margins(t::Margins) = t
+Margins(nt::NamedTuple) = Margins(;nt...)
+
+margin(::Nothing) = nothing
+margin(x) = mm_to_emu(x*10)
+
+function has_margins(m::Margins)
+    return !isnothing(m.left) || !isnothing(m.right) || !isnothing(m.top) || !isnothing(m.bottom) 
+end
+
 Base.@kwdef struct TextBody
     text::String
     style::TextStyle = TextStyle()
+    margins::Margins = Margins()
     body_properties::Union{Nothing, AbstractVector} = default_body_properties()
+end
+
+has_margins(t::TextBody) = has_margins(t.margins)
+
+# <a:bodyPr wrap="none" lIns="108000" tIns="180000" rIns="108000" bIns="108000" rtlCol="0">
+# <a:spAutoFit/>
+# </a:bodyPr>
+function make_body_properties_xml(m::Margins)
+    attr = []
+    if !isnothing(m.left)
+        push!(attr, Dict("lIns" => string(m.left)))
+    end
+    if !isnothing(m.top)
+        push!(attr, Dict("tIns" => string(m.top)))
+    end
+    if !isnothing(m.right)
+        push!(attr, Dict("rIns" => string(m.right)))
+    end
+    if !isnothing(m.bottom)
+        push!(attr, Dict("bIns" => string(m.bottom)))
+    end
+    return attr
 end
 
 function TextBody(text::AbstractString; kwargs...)
@@ -194,6 +244,7 @@ function TextBox(;
     linewidth = nothing, # use value in points, e.g. 3
     rotation = nothing, # use a value in degrees, e.g. 90
     textstyle = (italic = false, bold = false, fontsize = nothing),
+    margins = nothing, # e.g. (left=0.1, right=0.1, bottom=0.1, top=0.1) in millimeters
 )
 ```
 
@@ -257,10 +308,16 @@ struct TextBox<: AbstractShape
         linecolor = nothing,
         linewidth::Union{Nothing, Real} = 1,
         rotation::Union{Nothing, Real} = nothing,
+        margins = Margins(),
     )
         # input is in mm
         return new(
-            TextBody(content, style),
+            TextBody(
+                string(content),
+                TextStyle(style),
+                Margins(margins),
+                default_body_properties()
+            ),
             mm_to_emu(offset_x),
             mm_to_emu(offset_y),
             mm_to_emu(size_x),
@@ -303,6 +360,7 @@ function TextBox(;
     linecolor=nothing,
     linewidth::Union{Nothing, Int}=nothing,
     rotation::Union{Nothing, Real}=nothing,
+    margins = Margins(),
 )
     return TextBox(
         content,
@@ -316,6 +374,7 @@ function TextBox(;
         hex_color(linecolor),
         linewidth,
         rotation,
+        margins,
     )
 end
 
@@ -462,10 +521,15 @@ function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
     )
     push!(ap, ar)
 
+    bodyPr = t.body_properties
+    if has_margins(t)
+        append!(bodyPr, make_body_properties_xml(t.margins))
+    end
+
     txBody = Dict(
         "$txBodyNameSpace:txBody" => [
             Dict(
-                "a:bodyPr" => t.body_properties,
+                "a:bodyPr" => bodyPr,
             ),
             Dict("a:lstStyle" => missing),
             Dict(

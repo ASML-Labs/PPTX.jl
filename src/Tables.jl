@@ -220,35 +220,9 @@ function make_xml(line::Line, type::String = "R")
     )
 end
 
-struct Margins
-    left::Union{Nothing, Int}
-    right::Union{Nothing, Int}
-    top::Union{Nothing, Int}
-    bottom::Union{Nothing, Int}
-end
-
-function Margins(;
-    left = nothing,
-    right = nothing,
-    top = nothing,
-    bottom = nothing,
-    )
-    return Margins(margin(left), margin(right), margin(top), margin(bottom))
-end
-
-Margins(t::Margins) = t
-Margins(nt::NamedTuple) = Margins(;nt...)
-
-margin(::Nothing) = nothing
-margin(x) = mm_to_emu(x*10)
-
-function has_margins(m::Margins)
-    return !isnothing(m.left) || !isnothing(m.right) || !isnothing(m.top) || !isnothing(m.bottom) 
-end
-
 # margins set to 0.1 mm PPTX.points_to_emu(x)*10 ?
 # <a:tcPr marL="36000" marR="36000" marT="36000" marB="36000">
-function make_xml(m::Margins)
+function make_table_xml(m::Margins)
     attr = []
     if !isnothing(m.left)
         push!(attr, Dict("marL" => string(m.left)))
@@ -603,7 +577,7 @@ function make_table_cell(element::TableCell)
         end
 
         if has_margins(element)
-            append!(tcPr, make_xml(element.margins))
+            append!(tcPr, make_table_xml(element.margins))
         end
 
         # <a:tcPr vert="vert"> or <a:tcPr vert="vert270">

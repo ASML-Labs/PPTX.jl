@@ -50,6 +50,12 @@ using Colors
 
         b = TextBox("bla", rotation=360+45)
         @test b.rotation == 45.0
+
+        b = TextBox("bla", margins = (left=0.1, right=0.1))
+        @test b.content.margins.left == 36000
+        @test b.content.margins.right == 36000
+        @test b.content.margins.top === nothing
+        @test b.content.margins.bottom === nothing
     end
     @testset "Picture" begin
         @test_throws ArgumentError pic = Picture("path")

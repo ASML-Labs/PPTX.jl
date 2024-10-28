@@ -83,7 +83,7 @@ using Colors
         p = Presentation()
         ps = slides(p)
         @test length(ps) == 1
-        @test ps[1].title == "unknown"
+        @test ps[1].title == "My Presentation"
 
         s = Slide()
         @test isempty(shapes(s))

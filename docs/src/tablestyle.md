@@ -9,7 +9,7 @@ A table/dataframe with regular values will use the default .pptx table style:
 ```julia
 using PPTX, DataFrames
 
-p = Presentation()
+p = Presentation(title="Table", author="PPTX.jl")
 s = Slide(title="table example")
 push!(p, s)
 
@@ -32,7 +32,7 @@ You can disable the `header` (automatically generated from the dataframe column 
 ```julia
 using PPTX, DataFrames
 
-p = Presentation()
+p = Presentation(title="Table", author="PPTX.jl")
 s = Slide(title="table example")
 push!(p, s)
 
@@ -64,7 +64,7 @@ You may have to fiddle a little with the lines, since neighboring cells have pri
 ```julia
 using PPTX, DataFrames
 
-p = Presentation()
+p = Presentation(title="Table", author="PPTX.jl")
 s = Slide(title="table example")
 push!(p, s)
 
@@ -175,7 +175,7 @@ Now let's create the table in PPTX, with custom row heights and column widths.
 ```julia
 using PPTX, Colors
 
-p = Presentation()
+p = Presentation(title="Table", author="PPTX.jl")
 s = Slide(title="matrix table example")
 push!(p, s)
 

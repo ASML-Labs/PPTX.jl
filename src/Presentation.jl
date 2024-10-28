@@ -13,8 +13,8 @@ end
 ```julia
 Presentation(
     slides::Vector{Slide}=Slide[];
-    title::String="unknown",
-    author::String="unknown",
+    title::String="My Presentation",
+    author::String="PPTX.jl",
 )
 ```
 
@@ -26,10 +26,10 @@ If `isempty(slides)` then we add a first slide with the Title slide layout.
 ```jldoctest
 julia> using PPTX
 
-julia> pres = Presentation(; title = "My Presentation")
+julia> pres = Presentation(; title = "My Presentation", author = "PPTX.jl")
 Presentation with 1 slide
  title is "My Presentation"
- author is "unknown"
+ author is "PPTX.jl"
 
 ```
 """
@@ -53,7 +53,7 @@ slides(p::Presentation) = p.slides
 
 # keyword argument constructor
 function Presentation(
-    slides::Vector{Slide}=Slide[]; title::String="unknown", author::String="unknown"
+    slides::Vector{Slide}=Slide[]; title::String="My Presentation", author::String="PPTX.jl"
 )
     return Presentation(slides, author, title)
 end

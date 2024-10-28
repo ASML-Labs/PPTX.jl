@@ -101,7 +101,7 @@ t3 = TableCell(
 )
 
 df = DataFrame(a = [t1,t2], b = [t3,t4], c = [5,6])
-t = Table(df; offset_x=50, offset_y=50, size_x=80, size_y=60)
+t = Table(df; offset = (50,50), size = (80,60))
 
 push!(s, t)
 
@@ -116,8 +116,7 @@ write("example.pptx", p; overwrite=true)
 
 If you use a matrix as table content, the header will by default not be created. So you can add it manually through the styling.
 
-Let's also add some more complexity, like rotation, margins, colors, lines, etc.
-Make the example from https://github.com/ASML-Labs/PPTX.jl/issues/41
+Let's also add some more complexity, like text direction, margins, colors, lines, etc.
 
 I will first define a few helper functions for the table cell styling:
 
@@ -148,6 +147,7 @@ function column_header(x; color=RGB(165/255, 168/255, 173/255))
 end
 
 function cell_value(x::Real)
+    # cell color based on the value
     if x < 0.3
         # light red
         color = RGB(255/255, 195/255, 161/255)
@@ -162,18 +162,18 @@ function cell_value(x::Real)
         color = color,
         textstyle = (align=:center, color=:black),
         lines = (
-            bottom=(width=1, color=:white),
-            right=(width=1, color=:white),
+            bottom = (width=1, color=:white),
+            right = (width=1, color=:white),
             ),
         anchor = :center,
     )
 end
 ```
 
-Now let's create the table in PPTX
+Now let's create the table in PPTX, with custom row heights and column widths.
 
 ```julia
-using PPTX
+using PPTX, Colors
 
 p = Presentation()
 s = Slide(title="matrix table example")
@@ -187,11 +187,19 @@ col3_values = [1.22, 0.2, 0.05]
 col3 = [column_header("option 2"); cell_value.(col3_values)]
 cell_matrix = [col1 col2 col3]
 
-t = Table(cell_matrix; offset_x=50, offset_y=50, size_x=80, size_y=60)
+t = Table(
+    cell_matrix;
+    offset = (50,50),
+    column_widths = [30, 20, 20],
+    row_heights = [30, 5, 5, 5],
+)
 
 push!(s, t)
 
 write("example.pptx", p; overwrite=true)
 
+```
 
+```@raw html
+<img src="../images/decision_table.png" width="400px"/>
 ```

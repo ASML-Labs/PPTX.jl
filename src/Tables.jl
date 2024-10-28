@@ -6,6 +6,8 @@ Table(;
     offset_y::Real = 50,
     size_x::Real = 150,
     size_y::Real = 100,
+    column_widths::Vector{<:Real}, # set size per column
+    row_heights::Vector{<:Real}, # set size per row
     header::Bool = true, # whether to automatically write the columnnames as headers
     bandrow::Bool = true, # whether to use alternating coloring per row
 )
@@ -47,6 +49,8 @@ struct Table <: AbstractShape
     offset_y::Int # EMUs
     size_x::Int # EMUs
     size_y::Int # EMUs
+    column_widths::Union{Nothing, Vector{Int}}
+    row_heights::Union{Nothing, Vector{Int}}
     header::Bool
     bandrow::Bool
     style_id::String
@@ -56,6 +60,8 @@ struct Table <: AbstractShape
         offset_y::Real, # millimeters
         size_x::Real, # millimeters
         size_y::Real, # millimeters
+        column_widths::Union{Nothing, Vector{Int}} = nothing,
+        row_heights::Union{Nothing, Vector{Int}} = nothing,
         header::Bool = true,
         bandrow::Bool = true,
         style_id::String="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}",
@@ -63,10 +69,12 @@ struct Table <: AbstractShape
         # input is in mm
         return new(
             content,
-            Int(round(offset_x * _EMUS_PER_MM)),
-            Int(round(offset_y * _EMUS_PER_MM)),
-            Int(round(size_x * _EMUS_PER_MM)),
-            Int(round(size_y * _EMUS_PER_MM)),
+            mm_to_emu(offset_x),
+            mm_to_emu(offset_y),
+            mm_to_emu(size_x),
+            mm_to_emu(size_y),
+            mm_to_emu(column_widths),
+            mm_to_emu(row_heights),
             header,
             bandrow,
             style_id,
@@ -83,10 +91,14 @@ function Table(;
     size=(150, 100),
     size_x::Real=size[1], # millimeters
     size_y::Real=size[2], # millimeters
+    column_widths=nothing,
+    row_heights=nothing,
     header::Bool=header_default(content),
     bandrow::Bool=true,
 )
-    return Table(content, offset_x, offset_y, size_x, size_y, header, bandrow)
+    t = Table(content, offset_x, offset_y, size_x, size_y, column_widths, row_heights, header, bandrow)
+    check_size(t)
+    return t
 end
 
 Table(content; kwargs...) = Table(; content=content, kwargs...)
@@ -106,6 +118,15 @@ get_columns(m::AbstractMatrix) = eachcol(m)
 get_rows(t::Table) = get_rows(t.content)
 get_rows(t) = Tables.rows(t)
 get_rows(m::AbstractMatrix) = eachrow(m)
+
+function check_size(t::Table)
+    if !isnothing(t.column_widths)
+        @assert ncols(t) == length(t.column_widths) "column_widths does not match number of columns"
+    end
+    if !isnothing(t.row_heights)
+        @assert nrows(t) == length(t.row_heights) "row_heights does not match number of rows"
+    end
+end
 
 function _show_string(t::Table, compact::Bool)
     show_string = "Table"
@@ -468,9 +489,15 @@ end
 </a:tblGrid>
 =#
 function make_tblGrid(t::Table)
-    nr_of_columns = ncols(t)
-    column_width = t.size_x ÷ nr_of_columns
-    return Dict("a:tblGrid" => [make_gridCol(column_width) for _ in 1:nr_of_columns])
+    if isnothing(t.column_widths)
+        nr_of_columns = ncols(t)
+        column_width = t.size_x ÷ nr_of_columns
+        grid = [make_gridCol(column_width) for _ in 1:nr_of_columns]
+    else
+        check_size(t)
+        grid = [make_gridCol(w) for w in t.column_widths]
+    end
+    return Dict("a:tblGrid" => grid)
 end
 
 #= Example
@@ -500,20 +527,35 @@ end
 function make_rows(t::Table)::Vector
     tr_list = []
 
-    if t.header
-        nr_of_rows = nrows(t) + 1
+    if isnothing(t.row_heights)
+        if t.header
+            nr_of_rows = nrows(t) + 1
+        else
+            nr_of_rows = nrows(t)
+        end
+        height = t.size_y ÷ nr_of_rows
+        heights = fill(height, nrows(t))
+        header_height = height
     else
-        nr_of_rows = nrows(t)
+        if t.header
+            if t.size_y > sum(t.row_heights)
+                header_height = t.size_y - sum(t.row_heights)
+            else
+                header_height = t.row_heights[1]
+            end
+        else
+            heights = t.row_heights
+            header_height = 0
+        end
     end
-    height = t.size_y ÷ nr_of_rows
 
     # we also push the column names as a row
     if t.header
-        push!(tr_list, make_xml_row(Tables.columnnames(t), height))
+        push!(tr_list, make_xml_row(Tables.columnnames(t), header_height))
     end
 
-    for row in Tables.rows(t)
-        push!(tr_list, make_xml_row(row, height))
+    for (index, row) in enumerate(Tables.rows(t))
+        push!(tr_list, make_xml_row(row, heights[index]))
     end
     return tr_list
 end

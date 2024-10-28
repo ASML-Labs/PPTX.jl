@@ -265,7 +265,9 @@ struct TextBox<: AbstractShape
     end
 end
 
+mm_to_emu(::Nothing) = nothing
 mm_to_emu(x) = Int(round(x * _EMUS_PER_MM))
+mm_to_emu(x::AbstractArray{<:Real}) = mm_to_emu.(x)
 
 points_to_emu(x::Nothing) = nothing
 points_to_emu(x::Real) = Int(round(x * 12700))

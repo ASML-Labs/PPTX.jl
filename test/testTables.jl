@@ -11,6 +11,9 @@ using Colors
 
     @test PPTX.ncols(t) == 2
     @test PPTX.nrows(t) == 3
+
+    @test_throws AssertionError Table(rand(3,2); column_widths = [20,])
+    @test_throws AssertionError Table(rand(3,2); row_heights = [20,])
 end
 
 @testset "PPTX Tables from a DataFrame" begin

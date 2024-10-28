@@ -20,7 +20,7 @@ using PPTX, DataFrames
 
 # Lets make a presentation
 # note: this already adds a first slide with the title
-pres = Presentation(; title="My First PowerPoint")
+pres = Presentation(; title="My First PowerPoint", author="PPTX.jl")
 
 # What about a slide with some text
 s2 = Slide(; title="My First Slide")
@@ -67,7 +67,7 @@ pres
 
 Presentation with 4 slides
  title is "My First PowerPoint"
- author is "unknown"
+ author is "PPTX.jl"
 
 ```
 

@@ -121,7 +121,7 @@ Let's also add some more complexity, like text direction, margins, colors, lines
 I will first define a few helper functions for the table cell styling:
 
 ```julia
-using PPTX, Color
+using PPTX, Colors
 
 function row_header(x)
     return TableCell(

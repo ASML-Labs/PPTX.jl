@@ -22,7 +22,7 @@ write("example.pptx", p; overwrite=true)
 ```
 
 ```@raw html
-<img src="./assets/images/table.png" width="400px"/>
+<img src="assets/images/table.png" width="400px"/>
 ```
 
 ## General table styles
@@ -48,7 +48,7 @@ write("example.pptx", p; overwrite=true)
 ```
 
 ```@raw html
-<img src="./assets/images/table_no_header.png" width="400px"/>
+<img src="assets/images/table_no_header.png" width="400px"/>
 ```
 
 ## Table element styling
@@ -109,7 +109,7 @@ write("example.pptx", p; overwrite=true)
 ```
 
 ```@raw html
-<img src="./assets/images/styled_table.png" width="400px"/>
+<img src="assets/images/styled_table.png" width="400px"/>
 ```
 
 ## Table from Matrix
@@ -201,5 +201,5 @@ write("example.pptx", p; overwrite=true)
 ```
 
 ```@raw html
-<img src="./assets/images/decision_table.png" width="400px"/>
+<img src="assets/images/decision_table.png" width="400px"/>
 ```

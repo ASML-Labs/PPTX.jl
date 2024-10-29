@@ -21,9 +21,7 @@ push!(s, t)
 write("example.pptx", p; overwrite=true)
 ```
 
-```@raw html
-<img src="assets/images/table.png" width="400px"/>
-```
+![default table](./assets/images/table.png)
 
 ## General table styles
 
@@ -47,9 +45,8 @@ push!(s, t)
 write("example.pptx", p; overwrite=true)
 ```
 
-```@raw html
-<img src="assets/images/table_no_header.png" width="400px"/>
-```
+![table no header](./assets/images/table_no_header.png)
+
 
 ## Table element styling
 
@@ -108,9 +105,7 @@ push!(s, t)
 write("example.pptx", p; overwrite=true)
 ```
 
-```@raw html
-<img src="assets/images/styled_table.png" width="400px"/>
-```
+![styled table](./assets/images/styled_table.png)
 
 ## Table from Matrix
 
@@ -200,6 +195,4 @@ write("example.pptx", p; overwrite=true)
 
 ```
 
-```@raw html
-<img src="assets/images/decision_table.png" width="400px"/>
-```
+![decision table](./assets/images/decision_table.png)

@@ -41,7 +41,6 @@ TextBox
  size_y is 1080000 EMUs
 
 ```
-
 """
 struct TextStyle
     bold::Bool
@@ -283,7 +282,6 @@ TextBox
  linewidth is 38100 EMUs
 
 ```
-
 """
 struct TextBox<: AbstractShape
     content::TextBody

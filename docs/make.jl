@@ -5,6 +5,7 @@ import Documenter.Remotes: GitHub
 DocMeta.setdocmeta!(PPTX, :DocTestSetup, :(using PPTX, DataFrames, Colors); recursive=true)
 
 makedocs(;
+    clean=true,
     modules=[PPTX],
     #doctest=false,
     authors="ASML",

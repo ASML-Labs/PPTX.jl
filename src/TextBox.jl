@@ -171,6 +171,7 @@ Base.@kwdef struct TextBody
     text::String
     style::TextStyle = TextStyle()
     margins::Margins = Margins()
+    wrap::Bool = false
     body_properties::Union{Nothing, AbstractVector} = default_body_properties()
 end
 
@@ -221,14 +222,13 @@ Base.String(s::TextBody) = s.text
 
 function default_body_properties()
     return [
-        Dict("wrap" => "none"),
         Dict("rtlCol" => "0"),
         Dict("a:spAutoFit" => missing),
     ]
 end
 
 """
-```
+```julia
 function TextBox(;
     content::String = "",
     offset = (50,50), # millimeters
@@ -244,13 +244,14 @@ function TextBox(;
     rotation = nothing, # use a value in degrees, e.g. 90
     textstyle = (italic = false, bold = false, fontsize = nothing),
     margins = nothing, # e.g. (left=0.1, right=0.1, bottom=0.1, top=0.1) in millimeters
+    wrap = false, # wrap text in shape or not
 )
 ```
 
 A TextBox to be used on a Slide.
 Offsets and sizes are in millimeters, but will be converted to EMU.
 
-See `TextStyle` for more text style options.
+See [`TextStyle`](@ref TextStyle) for more text style options.
 
 # Examples
 ```jldoctest
@@ -307,6 +308,7 @@ struct TextBox<: AbstractShape
         linewidth::Union{Nothing, Real} = 1,
         rotation::Union{Nothing, Real} = nothing,
         margins = Margins(),
+        wrap = false,
     )
         # input is in mm
         return new(
@@ -314,6 +316,7 @@ struct TextBox<: AbstractShape
                 string(content),
                 TextStyle(style),
                 Margins(margins),
+                wrap,
                 default_body_properties()
             ),
             mm_to_emu(offset_x),
@@ -358,7 +361,8 @@ function TextBox(;
     linecolor=nothing,
     linewidth::Union{Nothing, Int}=nothing,
     rotation::Union{Nothing, Real}=nothing,
-    margins = Margins(),
+    margins=Margins(),
+    wrap=false,
 )
     return TextBox(
         content,
@@ -373,6 +377,7 @@ function TextBox(;
         linewidth,
         rotation,
         margins,
+        wrap,
     )
 end
 
@@ -519,7 +524,16 @@ function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
     )
     push!(ap, ar)
 
-    bodyPr = t.body_properties
+    if t.wrap
+        wrap = "square"
+    else
+        wrap = "none"
+    end
+    bodyPr = Dict{String}[Dict{String,String}("wrap" => wrap)]
+
+    if !isnothing(t.body_properties)
+        append!(bodyPr, t.body_properties)
+    end
     if has_margins(t)
         append!(bodyPr, make_body_properties_xml(t.margins))
     end

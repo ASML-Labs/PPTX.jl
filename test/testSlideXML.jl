@@ -21,6 +21,13 @@ using Colors
     @test any(x->get(x, "b", false)=="1", style_xml)
     @test any(x->get(x, "sz", false)=="2400", style_xml)
 
+    # default wrap is false
+    body_xml = PPTX.make_textbody_xml(text_box)
+    @test body_xml["p:txBody"][1]["a:bodyPr"][1]["wrap"] == "none"
+    # wrap is true, gives square wrapping
+    body_xml = PPTX.make_textbody_xml(TextBox(content="bla", wrap=true))
+    @test body_xml["p:txBody"][1]["a:bodyPr"][1]["wrap"] == "square"
+
     s = Slide()
 
     # add complex text box

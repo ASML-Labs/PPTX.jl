@@ -16,11 +16,47 @@ function write_relationships!(w::ZipWriter, p::Presentation)
     zip_commitfile(w)
 end
 
+function get_layoutnamemap(template::ZipBufferReader)
+    layoutnamemap = Dict{String,Int}()
+    for name in zip_names(template)
+        m = match(r"ppt/slideLayouts/slideLayout(?<id>\d*).xml$", name)
+        isnothing(m) && continue
+        id = parse(Int, m[:id])
+        doc = EzXML.parsexml(zip_readentry(template, name))
+        r = root(doc)
+        n = findfirst("//p:cSld", r)
+        push!(layoutnamemap, n["name"] => id)
+    end
+    layoutnamemap
+end
+
+function layoutnametoint!(slide, layoutmap)
+    if isa(slide.layout, String)
+        haskey(layoutmap, slide.layout) || error("Slide layout name $(slide.layout) not defined in the template")
+        slide.layout = layoutmap[slide.layout]
+    else
+        slide.layout in values(layoutmap) || error("Slide layout number $(slide.layout) not defined in the template")
+    end
+end
+
+"""
+    list_layoutnames(template_path = DEFAULT_TEMPLATE_DATA)
+
+List layout names defined in the template.
+"""
+function list_layoutnames(template_path = DEFAULT_TEMPLATE_DATA)
+    template = ZipBufferReader(read_template(template_path))
+    layoutnamemap = get_layoutnamemap(template::ZipBufferReader)
+    sort!(OrderedDict(layoutnamemap), by = x -> layoutnamemap[x])
+end
+
 function write_slides!(w::ZipWriter, p::Presentation, template::ZipBufferReader)
     if zip_isdir(template, "ppt/slides")
         error("input template pptx already contains slides, please use an empty template")
     end
+    layoutmap = get_layoutnamemap(template)
     for (idx, slide) in enumerate(slides(p))
+        layoutnametoint!(slide, layoutmap)
         xml = make_slide(slide)
         doc::EzXML.Document = xml_document(xml)
         add_title_shape!(doc, slide, template)

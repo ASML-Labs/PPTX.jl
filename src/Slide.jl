@@ -41,13 +41,13 @@ mutable struct Slide
     title::String
     shapes::Vector{AbstractShape}
     rid::Int
-    layout::Int
+    layout::Union{Int,String}
     slide_nr::Int
     function Slide(
         title::String,
         shapes::Vector{<:AbstractShape},
         rid::Int=0,
-        layout::Int=DEFAULT_SLIDE_LAYOUT,
+        layout::Union{Int,String}=DEFAULT_SLIDE_LAYOUT,
         slide_nr::Int=0
     )
         slide = new(title, AbstractShape[], rid, layout, slide_nr)
@@ -66,7 +66,7 @@ function Slide(;
     title::String="",
     shapes::Vector{<:AbstractShape}=AbstractShape[],
     rid::Int=0,
-    layout::Int=DEFAULT_SLIDE_LAYOUT,
+    layout::Union{Int,String}=DEFAULT_SLIDE_LAYOUT,
     slide_nr::Int=0
 )
     return Slide(title, shapes, rid, layout, slide_nr)

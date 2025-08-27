@@ -136,7 +136,7 @@ function relationship_xml(v::Video, r_id::Integer; it::Integer=0)
         )
 end
 
-function copy_video(w::ZipWriter, v::Video)
+function copy_shape(w::ZipWriter, v::Video)
     dest_path_vid = "ppt/media/$(filename(v))"
     zip_commitfile(w)
     if !zip_name_collision(w, dest_path_vid)

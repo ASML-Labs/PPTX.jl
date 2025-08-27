@@ -162,7 +162,7 @@ function relationship_xml(p::Picture, r_id::Integer)
     )
 end
 
-function copy_picture(w::ZipWriter, p::Picture)
+function copy_shape(w::ZipWriter, p::Picture)
     dest_path = "ppt/media/$(filename(p))"
     # save any file being written so zip_name_collision is correct.
     zip_commitfile(w) 

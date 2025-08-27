@@ -90,12 +90,7 @@ end
 function write_shapes!(w::ZipWriter, pres::Presentation)
     for slide in slides(pres)
         for shape in shapes(slide)
-            if shape isa Picture
-                copy_picture(w::ZipWriter, shape)
-            elseif shape isa Video
-                copy_video(w::ZipWriter, shape)
-                # copy_picture(w::ZipWriter, default_thumbnail())
-            end
+            copy_shape(w::ZipWriter, shape)
         end
     end
 end

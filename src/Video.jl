@@ -136,7 +136,7 @@ function relationship_xml(v::Video, r_id::Integer; it::Integer=0)
         )
 end
 
-function copy_shape(w::ZipWriter, v::Video)
+function copy_video(w::ZipWriter, v::Video)
     dest_path_vid = "ppt/media/$(filename(v))"
     zip_commitfile(w)
     if !zip_name_collision(w, dest_path_vid)
@@ -146,13 +146,27 @@ function copy_shape(w::ZipWriter, v::Video)
             zip_commitfile(w)
         end
     end
+end
 
-    dest_path_thumbnail = "ppt/media/$(thumbnail_name(v))"
-    thumbnail = create_thumbnail(v)
+function create_thumbnail_image(v::Video)
+    video = openvideo(v.source)
+    # Read the first frame
+    frame = read(video)
+    return frame
+end
+
+function thumbnail_name(v::Video)
+    name_without_extension = split(filename(v), ".")[begin]
+    return name_without_extension*"_thumbnail.png"
+end
+
+function create_thumbnail(w::ZipWriter, v::Video)
+    thumbnail = create_thumbnail_image(v)
     # Save to a temporary PNG file
     tmp_path = tempname() * ".png"
     save(tmp_path, thumbnail)
 
+    dest_path_thumbnail = "ppt/media/$(thumbnail_name(v))"
     # Write the PNG file into the ZIP
     zip_commitfile(w)
     if !zip_name_collision(w, dest_path_thumbnail)
@@ -164,14 +178,7 @@ function copy_shape(w::ZipWriter, v::Video)
     end
 end
 
-function thumbnail_name(v::Video)
-    name_without_extension = split(filename(v), ".")[begin]
-    return name_without_extension*"_thumbnail.png"
-end
-
-function create_thumbnail(v::Video)
-    video = openvideo(v.source)
-    # Read the first frame
-    frame = read(video)
-    return frame
+function copy_shape(w::ZipWriter, v::Video)
+    copy_video(w, v)
+    create_thumbnail(w, v)
 end

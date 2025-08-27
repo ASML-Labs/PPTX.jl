@@ -90,7 +90,9 @@ end
 function write_shapes!(w::ZipWriter, pres::Presentation)
     for slide in slides(pres)
         for shape in shapes(slide)
-            copy_shape(w::ZipWriter, shape)
+            if typeof(shape) ∈ [Picture, Video]
+                copy_shape(w::ZipWriter, shape)
+            end
         end
     end
 end

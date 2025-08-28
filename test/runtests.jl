@@ -1,10 +1,17 @@
+using Colors
 using PPTX
 using Test
+
 import PPTX: slides, shapes, rid
 
-include("testConstructors.jl")
-include("testTables.jl")
+include("testAbstractShape.jl")
 include("testHyperlinks.jl")
-include("testSlideXML.jl")
-include("testWriting.jl")
 include("testLayout.jl")
+include("testPicture.jl")
+include("testPresentation.jl")
+include("testSlide.jl")
+include("testSlideXML.jl")
+include("testTables.jl")
+include("testTextBox.jl")
+include("testVideo.jl")
+include("testWriting.jl")

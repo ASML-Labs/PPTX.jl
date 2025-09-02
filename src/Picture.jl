@@ -50,6 +50,9 @@ struct Picture <: AbstractShape
     function Picture(source::String, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int, rid::Int)
         new(source, offset_x, offset_y, size_x, size_y, rid, string(UUIDs.uuid4()))
     end
+    function Picture(source::String, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int, rid::Int, uuid::String)
+        new(source, offset_x, offset_y, size_x, size_y, rid, uuid)
+    end
 end
 
 function Picture(
@@ -79,6 +82,16 @@ function Picture(
         scaled_size_y,
         rid,
     )
+end
+
+function picture_thumbnail(source::String)
+    return Picture(source,
+    0,
+    0,
+    100,
+    100,
+    0,
+    "")
 end
 
 function set_rid(s::Picture, i::Int)
@@ -133,9 +146,10 @@ end
 function type_schema(p::Picture)
     return "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
 end
-function filename(p::Picture) 
+
+function filename(p::Picture)
     source_filename, extension = splitext(splitpath(p.source)[end])
-    return "$(source_filename)_$(p._uuid)$extension"
+    return "$(source_filename)$(p._uuid)$extension"
 end
 
 function relationship_xml(p::Picture, r_id::Integer)
@@ -148,7 +162,7 @@ function relationship_xml(p::Picture, r_id::Integer)
     )
 end
 
-function copy_picture(w::ZipWriter, p::Picture)
+function copy_shape(w::ZipWriter, p::Picture)
     dest_path = "ppt/media/$(filename(p))"
     # save any file being written so zip_name_collision is correct.
     zip_commitfile(w) 

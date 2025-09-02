@@ -90,8 +90,8 @@ end
 function write_shapes!(w::ZipWriter, pres::Presentation)
     for slide in slides(pres)
         for shape in shapes(slide)
-            if shape isa Picture
-                copy_picture(w::ZipWriter, shape)
+            if typeof(shape) ∈ [Picture, Video]
+                copy_shape(w::ZipWriter, shape)
             end
         end
     end
@@ -121,7 +121,8 @@ function add_contenttypes!(w::ZipWriter, template::ZipBufferReader, pres::Presen
         ("png", "image/png"),
         ("svg", "image/svg+xml"),
         ("tif", "application/octet-stream"),
-        ("wmf", "image/x-wmf")
+        ("wmf", "image/x-wmf"),
+        ("mp4", "video/mp4")
     )
     for extension_contenttype in extension_contenttypes
         ext, ct = extension_contenttype

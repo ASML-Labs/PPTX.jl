@@ -99,6 +99,8 @@ end
     @test PPTX.rid(s.shapes[2]) == 2
     push!(s, Picture(joinpath(PPTX.ASSETS_DIR,"cauliflower.jpg")))
     @test PPTX.rid(s.shapes[3]) == 3
+    push!(s, Video(joinpath(PPTX.ASSETS_DIR,"sample_video.mp4")))
+    @test PPTX.rid(s.shapes[4]) == 4
 end
 
 @testset "update title in XML" begin

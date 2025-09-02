@@ -222,6 +222,15 @@ function make_slide_relationships(s::Slide, relationship_map::Dict = slide_relat
             push!(xml_slide_rels["Relationships"], relationship_xml(r_shape, r_id))
             push!(used_r_ids, r_id)
         end
+        # For a video 2 extra relationships are defined: an extra video link and a thumbnail
+        if shape isa Video
+            r_id += 1
+            push!(xml_slide_rels["Relationships"], relationship_xml(shape, r_id; it = 1))
+            push!(used_r_ids, r_id)
+            r_id += 1
+            push!(xml_slide_rels["Relationships"], relationship_xml(picture_thumbnail(thumbnail_name(shape)), r_id))
+            push!(used_r_ids, r_id)
+        end
     end
     return xml_slide_rels
 end

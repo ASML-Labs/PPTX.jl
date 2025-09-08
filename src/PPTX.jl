@@ -2,7 +2,6 @@ module PPTX
 
 using DataStructures
 using EzXML
-using Images: save
 using VideoIO: openvideo
 using XMLDict
 using ZipArchives:

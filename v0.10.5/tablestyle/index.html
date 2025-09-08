@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Table Styling · PPTX.jl</title><meta name="title" content="Table Styling · PPTX.jl"/><meta property="og:title" content="Table Styling · PPTX.jl"/><meta property="twitter:title" content="Table Styling · PPTX.jl"/><meta name="description" content="Documentation for PPTX.jl."/><meta property="og:description" content="Documentation for PPTX.jl."/><meta property="twitter:description" content="Documentation for PPTX.jl."/><script data-outdated-warner src="../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.050/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL=".."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../assets/documenter.js"></script><script src="../search_index.js"></script><script src="../siteinfo.js"></script><script src="../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><a class="docs-logo" href="../"><img src="../assets/logo.svg" alt="PPTX.jl logo"/></a><div class="docs-package-name"><span class="docs-autofit"><a href="../">PPTX.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../">Home</a></li><li class="is-active"><a class="tocitem" href>Table Styling</a><ul class="internal"><li><a class="tocitem" href="#Default-table"><span>Default table</span></a></li><li><a class="tocitem" href="#General-table-styles"><span>General table styles</span></a></li><li><a class="tocitem" href="#Table-element-styling"><span>Table element styling</span></a></li><li><a class="tocitem" href="#Table-from-Matrix"><span>Table from Matrix</span></a></li></ul></li><li><a class="tocitem" href="../plots/">Plots</a></li><li><a class="tocitem" href="../api/">API Reference</a></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>Table Styling</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Table Styling</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/ASML-Labs/PPTX.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/ASML-Labs/PPTX.jl/blob/main/docs/src/tablestyle.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Table-styling"><a class="docs-heading-anchor" href="#Table-styling">Table styling</a><a id="Table-styling-1"></a><a class="docs-heading-anchor-permalink" href="#Table-styling" title="Permalink"></a></h1><p>A few examples on how to style a table.</p><h2 id="Default-table"><a class="docs-heading-anchor" href="#Default-table">Default table</a><a id="Default-table-1"></a><a class="docs-heading-anchor-permalink" href="#Default-table" title="Permalink"></a></h2><p>A table/dataframe with regular values will use the default .pptx table style:</p><pre><code class="language-julia hljs">using PPTX, DataFrames
+
+p = Presentation(title=&quot;Table&quot;, author=&quot;PPTX.jl&quot;)
+s = Slide(title=&quot;table example&quot;)
+push!(p, s)
+
+df = DataFrame(a = [1,2], b = [3,4], c = [5,6])
+t = Table(df; offset_x=50, offset_y=50, size_x=80, size_y=60)
+
+push!(s, t)
+
+write(&quot;example.pptx&quot;, p; overwrite=true)</code></pre><img src="../assets/images/table.png" width="400px"/><h2 id="General-table-styles"><a class="docs-heading-anchor" href="#General-table-styles">General table styles</a><a id="General-table-styles-1"></a><a class="docs-heading-anchor-permalink" href="#General-table-styles" title="Permalink"></a></h2><p>You can disable the <code>header</code> (automatically generated from the dataframe column names) and the <code>bandrow</code> (the &#39;banded&#39; or alternating coloring of different rows).</p><pre><code class="language-julia hljs">using PPTX, DataFrames
+
+p = Presentation(title=&quot;Table&quot;, author=&quot;PPTX.jl&quot;)
+s = Slide(title=&quot;table example&quot;)
+push!(p, s)
+
+df = DataFrame(a = [1,2], b = [3,4], c = [5,6])
+t = Table(df;
+    header=false, bandrow=false,
+    offset_x=50, offset_y=50, size_x=80, size_y=40
+)
+
+push!(s, t)
+
+write(&quot;example.pptx&quot;, p; overwrite=true)</code></pre><img src="../assets/images/table_no_header.png" width="400px"/><h2 id="Table-element-styling"><a class="docs-heading-anchor" href="#Table-element-styling">Table element styling</a><a id="Table-element-styling-1"></a><a class="docs-heading-anchor-permalink" href="#Table-element-styling" title="Permalink"></a></h2><p>You can overrule the table style per element.</p><p>For example, let&#39;s color one box and add lines around it. We&#39;ll also center the alignment and anchor (vertical alignment) of the text.</p><p>And let&#39;s also change the <code>dash</code> value. Possible values are &quot;solid&quot;, &quot;dot&quot;, &quot;dash&quot;, &quot;dashDot&quot;, &quot;lgDash&quot;, &quot;lgDashDot&quot;, &quot;sysDash&quot;, &quot;sysDashDotDot&quot;. Default is &quot;solid&quot;.</p><p>You may have to fiddle a little with the lines, since neighboring cells have priority.</p><pre><code class="language-julia hljs">using PPTX, DataFrames
+
+p = Presentation(title=&quot;Table&quot;, author=&quot;PPTX.jl&quot;)
+s = Slide(title=&quot;table example&quot;)
+push!(p, s)
+
+# missing color will make the cell transparant
+t1 = TableCell(1; color=missing)
+
+# a red cell with lines on all edges
+# top and left are actually overruled by neighboring cells
+t4 = TableCell(
+    4;
+    color=:darkred,
+    textstyle=(color=:white,align=:center),
+    anchor=:center,
+    lines=(
+        bottom=(width=3,color=:black),
+        right=(width=3,color=:black,dash=:sysDash),
+    )
+)
+
+# define lines of surrounding elements
+
+t2 = TableCell(
+    2;
+    lines=(
+        right=(width=3,color=:black,dash=:sysDash),
+    )
+)
+
+t3 = TableCell(
+    3;
+    lines=(
+        bottom=(width=3,color=:black),
+    )
+)
+
+df = DataFrame(a = [t1,t2], b = [t3,t4], c = [5,6])
+t = Table(df; offset = (50,50), size = (80,60))
+
+push!(s, t)
+
+write(&quot;example.pptx&quot;, p; overwrite=true)</code></pre><img src="../assets/images/styled_table.png" width="400px"/><h2 id="Table-from-Matrix"><a class="docs-heading-anchor" href="#Table-from-Matrix">Table from Matrix</a><a id="Table-from-Matrix-1"></a><a class="docs-heading-anchor-permalink" href="#Table-from-Matrix" title="Permalink"></a></h2><p>If you use a matrix as table content, the header will by default not be created. So you can add it manually through the styling.</p><p>Let&#39;s also add some more complexity, like text direction, margins, colors, lines, etc.</p><p>I will first define a few helper functions for the table cell styling:</p><pre><code class="language-julia hljs">using PPTX, Colors
+
+function row_header(x)
+    return TableCell(
+        x;
+        color = RGB(165/255, 168/255, 173/255),
+        textstyle = (align=:right, color=:white),
+        margins = (bottom=0.2, left=0.2, right=0.2, top=0.2,),
+        lines = (right=(width=3, color=:white),),
+        anchor = :center,
+    )
+end
+
+function column_header(x; color=RGB(165/255, 168/255, 173/255))
+    return TableCell(
+        x;
+        color = color,
+        textstyle = (align=:left, color=:white, bold=true),
+        margins = (bottom=0.2, left=0.2, right=0.2, top=0.2,),
+        lines = (bottom=(width=3, color=:white),),
+        direction = :vert270,
+        anchor = :center,
+    )
+end
+
+function cell_value(x::Real)
+    # cell color based on the value
+    if x &lt; 0.3
+        # light red
+        color = RGB(255/255, 195/255, 161/255)
+    elseif x &gt; 1.0
+        # light green
+        color = RGB(174/255, 232/255, 161/255)
+    else # light orange
+        color = RGB(255/255, 237/255, 153/255)
+    end
+    return TableCell(
+        x;
+        color = color,
+        textstyle = (align=:center, color=:black),
+        lines = (
+            bottom = (width=1, color=:white),
+            right = (width=1, color=:white),
+            ),
+        anchor = :center,
+    )
+end</code></pre><p>Now let&#39;s create the table in PPTX, with custom row heights and column widths.</p><pre><code class="language-julia hljs">using PPTX, Colors
+
+p = Presentation(title=&quot;Table&quot;, author=&quot;PPTX.jl&quot;)
+s = Slide(title=&quot;matrix table example&quot;)
+push!(p, s)
+
+col1_values = [&quot;metric 1&quot;, &quot;metric 2&quot;, &quot;metric 3&quot;]
+col1 = [column_header(&quot;&quot;, color=missing); row_header.(col1_values)]
+col2_values = [0.55, 3.57, 0.01]
+col2 = [column_header(&quot;option 1&quot;); cell_value.(col2_values)]
+col3_values = [1.22, 0.2, 0.05]
+col3 = [column_header(&quot;option 2&quot;); cell_value.(col3_values)]
+cell_matrix = [col1 col2 col3]
+
+t = Table(
+    cell_matrix;
+    offset = (50,50),
+    column_widths = [30, 20, 20],
+    row_heights = [30, 5, 5, 5],
+)
+
+push!(s, t)
+
+write(&quot;example.pptx&quot;, p; overwrite=true)
+</code></pre><img src="../assets/images/decision_table.png" width="400px"/></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../">« Home</a><a class="docs-footer-nextpage" href="../plots/">Plots »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.14.1 on <span class="colophon-date" title="Monday 8 September 2025 09:53">Monday 8 September 2025</span>. Using Julia version 1.6.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>

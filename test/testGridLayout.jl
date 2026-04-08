@@ -82,4 +82,26 @@
         Base.show(io, MIME"text/plain"(), layout)
         @test contains(String(take!(io)), "1 assigned cell")
     end
+
+    @testset "push! assigns nested rids" begin
+        slide = Slide()
+        layout = GridLayout(1, 2)
+        img1 = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"); size_x=10, size_y=10)
+        img2 = Picture(joinpath(PPTX.ASSETS_DIR, "julia_dots.wmf"); size_x=10, size_y=10)
+        layout[1, 1] = img1
+        layout[1, 2] = img2
+
+        push!(slide, layout)
+
+        @test length(PPTX.shapes(slide)) == 1
+        pushed_layout = only(PPTX.shapes(slide))
+        @test pushed_layout isa GridLayout
+
+        pushed_entries = pushed_layout._entries
+        @test PPTX.rid(pushed_entries[1][1]) == 2
+        @test PPTX.rid(pushed_entries[2][1]) == 3
+        @test PPTX.rid(pushed_layout) == 3
+
+        @test PPTX.new_rid(slide) == 4
+    end
 end

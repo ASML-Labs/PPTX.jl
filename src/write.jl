@@ -87,12 +87,14 @@ function add_title_shape!(doc::EzXML.Document, slide::Slide, template::ZipBuffer
     nothing
 end
 
+# default do nothing
+copy_shape(w::ZipWriter, shape::AbstractShape) = nothing
+
+# some shapes, like Pictures, are media files that need to be copied/written into the pptx
 function write_shapes!(w::ZipWriter, pres::Presentation)
     for slide in slides(pres)
         for shape in shapes(slide)
-            if typeof(shape) ∈ [Picture, Video]
-                copy_shape(w::ZipWriter, shape)
-            end
+            copy_shape(w, shape)
         end
     end
 end

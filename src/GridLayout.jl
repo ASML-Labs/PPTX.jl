@@ -28,9 +28,17 @@ Rules:
 mutable struct GridLayout <: AbstractShape
     nrows::Int
     ncols::Int
-    padding::Float64 # mm to EMUs
-    margins::Margins # mm to EMUs
+    padding::Float64
+    margins::Margins
     _entries::Vector{Tuple{AbstractShape,UnitRange{Int},UnitRange{Int}}}
+end
+
+function shapes(layout::GridLayout)
+    return getfield.(layout._entries, 1)
+end
+
+function rid(layout::GridLayout)
+    return maximum(rid.(shapes(layout)))
 end
 
 function GridLayout(
@@ -51,8 +59,6 @@ function GridLayout(
     )
 end
 
-# ----- index normalization -----
-
 function _to_range(idx, n::Int, dim::String)::UnitRange{Int}
     if idx isa Colon
         return 1:n
@@ -69,8 +75,6 @@ function _to_range(idx, n::Int, dim::String)::UnitRange{Int}
         throw(ArgumentError("unsupported index type $(typeof(idx)) for $dim"))
     end
 end
-
-# ----- setindex! -----
 
 function Base.setindex!(layout::GridLayout, shape::AbstractShape, row_idx, col_idx)
     row_range = _to_range(row_idx, layout.nrows, "row")
@@ -89,8 +93,6 @@ function Base.setindex!(layout::GridLayout, shape::AbstractShape, row_idx, col_i
     return shape
 end
 
-# ----- show -----
-
 function _show_string(layout::GridLayout, compact::Bool)
     s = "GridLayout($(layout.nrows)×$(layout.ncols))"
     if !compact
@@ -98,4 +100,10 @@ function _show_string(layout::GridLayout, compact::Bool)
         s *= " with $n assigned cell$(n == 1 ? "" : "s")"
     end
     return s
+end
+
+function copy_shape(w::ZipWriter, p::GridLayout)
+    for (nested_shape, _, _) in p._entries
+        copy_shape(w, nested_shape)
+    end
 end

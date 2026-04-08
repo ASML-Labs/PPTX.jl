@@ -91,6 +91,20 @@ function Base.push!(slide::Slide, shape::AbstractShape)
     end
 end
 
+function Base.push!(slide::Slide, layout::GridLayout)
+    next_rid = new_rid(slide)
+    updated_entries = Tuple{AbstractShape,UnitRange{Int},UnitRange{Int}}[]
+    for (shape, row_range, col_range) in layout._entries
+        if has_rid(shape)
+            shape = set_rid(shape, next_rid)
+            next_rid += 1
+        end
+        push!(updated_entries, (shape, row_range, col_range))
+    end
+    layout._entries = updated_entries
+    return push!(shapes(slide), layout)
+end
+
 function make_slide(s::Slide, relationship_map::Dict = slide_relationship_map(s))::AbstractDict
     xml_slide = OrderedDict("p:sld" => main_attributes())
 

@@ -148,6 +148,15 @@ struct Margins
     bottom::Union{Nothing, Int}
 end
 
+function Base.:(==)(m1::Margins, m2::Margins)
+    return m1.left == m2.left && m1.right == m2.right && m1.top == m2.top && m1.bottom == m2.bottom
+end
+
+function Margins(m::Real)
+    mar = margin(m)
+    return Margins(mar, mar, mar, mar)
+end
+
 function Margins(;
     left = nothing,
     right = nothing,

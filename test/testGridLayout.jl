@@ -104,4 +104,26 @@
 
         @test PPTX.new_rid(slide) == 4
     end
+
+    @testset "nested relationships" begin
+        target_slide = Slide()
+        slide = Slide()
+        layout = GridLayout(1, 2)
+        img = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"); size_x=10, size_y=10)
+        link_box = TextBox(content="jump", hlink=target_slide)
+        layout[1, 1] = img
+        layout[1, 2] = link_box
+        push!(slide, layout)
+
+        rel_map = PPTX.slide_relationship_map(slide)
+        nested_img = only(filter(x -> x isa Picture, PPTX.shapes(layout)))
+        @test haskey(rel_map, nested_img)
+        @test haskey(rel_map, target_slide)
+
+        rel_xml = PPTX.make_slide_relationships(slide)
+        relationships = rel_xml["Relationships"]
+        @test length(relationships) == 4
+        @test relationships[3]["Relationship"][1]["Id"] == "rId2"
+        @test relationships[4]["Relationship"][1]["Id"] == "rId3"
+    end
 end

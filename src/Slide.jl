@@ -188,16 +188,28 @@ function relationship_xml(url::AbstractString, r_id::Integer)
     )
 end
 
+_nested_shapes(shape::AbstractShape) = (shape,)
+
+function _nested_shapes(layout::GridLayout)
+    nested = AbstractShape[]
+    for (shape, _, _) in layout._entries
+        append!(nested, _nested_shapes(shape))
+    end
+    return nested
+end
+
 function slide_relationship_map(s::Slide)
     d = Dict{Union{Slide, AbstractShape, AbstractString}, Int}()
     r_id = 1 # first rid is reserved by slideLayout
     for shape in shapes(s)
-        if has_rid(shape) && !haskey(d, shape)
-            r_id += 1
-            d[shape] = r_id
-        elseif has_hyperlink(shape) && !haskey(d, shape.hlink)
-            r_id += 1
-            d[shape.hlink] = r_id
+        for nested_shape in _nested_shapes(shape)
+            if has_rid(nested_shape) && !haskey(d, nested_shape)
+                r_id += 1
+                d[nested_shape] = r_id
+            elseif has_hyperlink(nested_shape) && !haskey(d, nested_shape.hlink)
+                r_id += 1
+                d[nested_shape.hlink] = r_id
+            end
         end
     end
     return d
@@ -223,27 +235,29 @@ function make_slide_relationships(s::Slide, relationship_map::Dict = slide_relat
     )
     used_r_ids = [1]
     for shape in shapes(s)
-        r_id = 1
-        if has_rid(shape)
-            r_id = relationship_map[shape]
-            r_shape = shape
-        end
-        if has_hyperlink(shape)
-            r_id = relationship_map[shape.hlink]
-            r_shape = shape.hlink
-        end
-        if r_id ∉ used_r_ids
-            push!(xml_slide_rels["Relationships"], relationship_xml(r_shape, r_id))
-            push!(used_r_ids, r_id)
-        end
-        # For a video 2 extra relationships are defined: an extra video link and a thumbnail
-        if shape isa Video
-            r_id += 1
-            push!(xml_slide_rels["Relationships"], relationship_xml(shape, r_id; it = 1))
-            push!(used_r_ids, r_id)
-            r_id += 1
-            push!(xml_slide_rels["Relationships"], relationship_xml(picture_thumbnail(thumbnail_name(shape)), r_id))
-            push!(used_r_ids, r_id)
+        for nested_shape in _nested_shapes(shape)
+            r_id = 1
+            if has_rid(nested_shape)
+                r_id = relationship_map[nested_shape]
+                r_shape = nested_shape
+            end
+            if has_hyperlink(nested_shape)
+                r_id = relationship_map[nested_shape.hlink]
+                r_shape = nested_shape.hlink
+            end
+            if r_id ∉ used_r_ids
+                push!(xml_slide_rels["Relationships"], relationship_xml(r_shape, r_id))
+                push!(used_r_ids, r_id)
+            end
+            # For a video 2 extra relationships are defined: an extra video link and a thumbnail
+            if nested_shape isa Video
+                r_id += 1
+                push!(xml_slide_rels["Relationships"], relationship_xml(nested_shape, r_id; it = 1))
+                push!(used_r_ids, r_id)
+                r_id += 1
+                push!(xml_slide_rels["Relationships"], relationship_xml(picture_thumbnail(thumbnail_name(nested_shape)), r_id))
+                push!(used_r_ids, r_id)
+            end
         end
     end
     return xml_slide_rels

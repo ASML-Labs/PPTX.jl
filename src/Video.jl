@@ -8,6 +8,18 @@ struct Video <: AbstractShape
     size_y::Int
     rid::Int
     _uuid::String
+    function Video(
+        source::String,
+        offset_x::Int,
+        offset_y::Int,
+        size_x::Int,
+        size_y::Int,
+        rid::Int,
+        uuid::String,
+    )
+        new(source, offset_x, offset_y, size_x, size_y, rid, uuid)
+    end
+
     function Video(source::String, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int, rid::Int)
         new(source, offset_x, offset_y, size_x, size_y, rid, string(UUIDs.uuid4()))
     end
@@ -40,6 +52,11 @@ end
 function set_rid(v::Video, i::Int)
     return Video(v.source, v.offset_x, v.offset_y, v.size_x, v.size_y, i)
 end
+
+function set_geometry(v::Video, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int)
+    return Video(v.source, offset_x, offset_y, size_x, size_y, v.rid, v._uuid)
+end
+
 rid(v::Video) = v.rid
 has_rid(v::Video) = true
 

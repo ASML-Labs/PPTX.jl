@@ -55,9 +55,12 @@ function write_slides!(w::ZipWriter, p::Presentation, template::ZipBufferReader)
         error("input template pptx already contains slides, please use an empty template")
     end
     layoutmap = get_layoutnamemap(template)
+    sz = p._state.size
+    sz_x = isnothing(sz) ? Int(13.333 * _EMUS_PER_INCH) : sz.x
+    sz_y = isnothing(sz) ? Int(7.5 * _EMUS_PER_INCH) : sz.y
     for (idx, slide) in enumerate(slides(p))
         layoutnametoint!(slide, layoutmap)
-        xml = make_slide(slide)
+        xml = make_slide(slide; slide_size_x=sz_x, slide_size_y=sz_y)
         doc::EzXML.Document = xml_document(xml)
         add_title_shape!(doc, slide, template)
         zip_newfile(w, "ppt/slides/slide$idx.xml"; compress=true)

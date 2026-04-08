@@ -56,6 +56,32 @@ struct Table <: AbstractShape
     style_id::String
     function Table(
         content,
+        offset_x::Int,
+        offset_y::Int,
+        size_x::Int,
+        size_y::Int,
+        column_widths::Union{Nothing, Vector{Int}} = nothing,
+        row_heights::Union{Nothing, Vector{Int}} = nothing,
+        header::Bool = true,
+        bandrow::Bool = true,
+        style_id::String = "{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}",
+    )
+        return new(
+            content,
+            offset_x,
+            offset_y,
+            size_x,
+            size_y,
+            column_widths,
+            row_heights,
+            header,
+            bandrow,
+            style_id,
+        )
+    end
+
+    function Table(
+        content,
         offset_x::Real, # millimeters
         offset_y::Real, # millimeters
         size_x::Real, # millimeters
@@ -80,6 +106,21 @@ struct Table <: AbstractShape
             style_id,
         )
     end
+end
+
+function set_geometry(t::Table, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int)
+    return Table(
+        t.content,
+        offset_x,
+        offset_y,
+        size_x,
+        size_y,
+        t.column_widths,
+        t.row_heights,
+        t.header,
+        t.bandrow,
+        t.style_id,
+    )
 end
 
 # keyword argument constructor

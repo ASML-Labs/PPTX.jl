@@ -2,6 +2,7 @@ abstract type AbstractShape end
 
 # the 'relative identifier' is used to link shapes in the PowerPoint XML
 set_rid!(s::AbstractShape, i::Int) = nothing
+set_geometry(s::AbstractShape, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int) = s
 has_rid(s::AbstractShape) = false
 
 ## If AbstractShape does not have rId return 0

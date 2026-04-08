@@ -4,16 +4,17 @@
         @test layout.nrows == 2
         @test layout.ncols == 3
         @test layout.padding == PPTX.mm_to_emu(5)
-        @test layout.margins == PPTX.Margins(5)
+        @test layout.margins == PPTX.GridMargins(5)
         @test isempty(layout._entries)
 
         layout_p = GridLayout(3, 3; padding=10)
         @test layout_p.padding == PPTX.mm_to_emu(10)
-        @test layout_p.margins == PPTX.Margins(10)
+        @test layout_p.margins == PPTX.GridMargins(10)
 
         @test_throws ArgumentError GridLayout(0, 2)
         @test_throws ArgumentError GridLayout(2, 0)
         @test_throws ArgumentError GridLayout(2, 2; padding=-1)
+        @test_throws ArgumentError GridLayout(2, 2; margins=(left=-1, right=0, top=0, bottom=0))
     end
 
     @testset "setindex! integer indices" begin
@@ -125,5 +126,40 @@
         @test length(relationships) == 4
         @test relationships[3]["Relationship"][1]["Id"] == "rId2"
         @test relationships[4]["Relationship"][1]["Id"] == "rId3"
+    end
+
+    @testset "make_slide places grid shapes" begin
+        slide = Slide()
+        layout = GridLayout(2, 2; padding=10)
+        layout[1, 1] = TextBox("Title")
+        layout[2, :] = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"); size_x=10, size_y=10)
+        push!(slide, layout)
+
+        xml = PPTX.make_slide(
+            slide;
+            slide_size_x=PPTX.mm_to_emu(100),
+            slide_size_y=PPTX.mm_to_emu(50),
+        )
+
+        sp_tree = xml["p:sld"][end]["p:cSld"][1]["p:spTree"]
+        # spTree contains 2 group entries first, then our 2 layout shapes
+        text_sp = sp_tree[3]["p:sp"]
+        pic_sp = sp_tree[4]["p:pic"]
+
+        text_xfrm = text_sp[2]["p:spPr"][1]["a:xfrm"]
+        text_off = only(filter(x -> haskey(x, "a:off"), text_xfrm))["a:off"]
+        text_ext = only(filter(x -> haskey(x, "a:ext"), text_xfrm))["a:ext"]
+        @test text_off[1]["x"] == string(PPTX.mm_to_emu(10))
+        @test text_off[2]["y"] == string(PPTX.mm_to_emu(10))
+        @test text_ext[1]["cx"] == string(PPTX.mm_to_emu(35))
+        @test text_ext[2]["cy"] == string(PPTX.mm_to_emu(10))
+
+        pic_xfrm = pic_sp[3]["p:spPr"][1]["a:xfrm"]
+        pic_off = pic_xfrm[1]["a:off"]
+        pic_ext = pic_xfrm[2]["a:ext"]
+        @test pic_off[1]["x"] == string(PPTX.mm_to_emu(10))
+        @test pic_off[2]["y"] == string(PPTX.mm_to_emu(30))
+        @test pic_ext[1]["cx"] == string(PPTX.mm_to_emu(80))
+        @test pic_ext[2]["cy"] == string(PPTX.mm_to_emu(10))
     end
 end

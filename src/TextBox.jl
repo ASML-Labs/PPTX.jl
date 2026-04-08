@@ -305,6 +305,32 @@ struct TextBox<: AbstractShape
     linewidth::Union{Nothing, Int}
     rotation::Union{Nothing, Float64}
     function TextBox(
+        content::TextBody,
+        offset_x::Int,
+        offset_y::Int,
+        size_x::Int,
+        size_y::Int,
+        hlink::Union{Nothing, Any} = nothing,
+        color::Union{Nothing, String} = nothing,
+        linecolor::Union{Nothing, String} = nothing,
+        linewidth::Union{Nothing, Int} = nothing,
+        rotation::Union{Nothing, Float64} = nothing,
+    )
+        return new(
+            content,
+            offset_x,
+            offset_y,
+            size_x,
+            size_y,
+            hlink,
+            color,
+            linecolor,
+            linewidth,
+            rotation,
+        )
+    end
+
+    function TextBox(
         content::AbstractString,
         offset_x::Real, # millimeters
         offset_y::Real, # millimeters
@@ -339,6 +365,21 @@ struct TextBox<: AbstractShape
             rotation_value(rotation),
         )
     end
+end
+
+function set_geometry(t::TextBox, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int)
+    return TextBox(
+        t.content,
+        offset_x,
+        offset_y,
+        size_x,
+        size_y,
+        t.hlink,
+        t.color,
+        t.linecolor,
+        t.linewidth,
+        t.rotation,
+    )
 end
 
 mm_to_emu(::Nothing) = nothing

@@ -97,6 +97,11 @@ end
 function set_rid(s::Picture, i::Int)
     return Picture(s.source, s.offset_x, s.offset_y, s.size_x, s.size_y, i)
 end
+
+function set_geometry(s::Picture, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int)
+    return Picture(s.source, offset_x, offset_y, size_x, size_y, s.rid, s._uuid)
+end
+
 rid(s::Picture) = s.rid
 has_rid(s::Picture) = true
 

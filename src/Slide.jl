@@ -105,14 +105,57 @@ function Base.push!(slide::Slide, layout::GridLayout)
     return push!(shapes(slide), layout)
 end
 
-function make_slide(s::Slide, relationship_map::Dict = slide_relationship_map(s))::AbstractDict
+function _bind_relationships!(relationship_map::Dict, original_shape::AbstractShape, updated_shape::AbstractShape)
+    if has_rid(original_shape) && haskey(relationship_map, original_shape)
+        relationship_map[updated_shape] = relationship_map[original_shape]
+    end
+    return nothing
+end
+
+function _make_xml_nodes(
+    shape::AbstractShape,
+    start_id::Int,
+    relationship_map::Dict,
+    slide_size_x::Int,
+    slide_size_y::Int,
+)
+    return Any[make_xml(shape, start_id, relationship_map)]
+end
+
+function _make_xml_nodes(
+    layout::GridLayout,
+    start_id::Int,
+    relationship_map::Dict,
+    slide_size_x::Int,
+    slide_size_y::Int,
+)
+    xml_nodes = Any[]
+    current_id = start_id
+    for (shape, row_range, col_range) in layout._entries
+        offset_x, offset_y, size_x, size_y =
+            layout_bounds(layout, row_range, col_range, slide_size_x, slide_size_y)
+        shape_updated = set_geometry(shape, offset_x, offset_y, size_x, size_y)
+        _bind_relationships!(relationship_map, shape, shape_updated)
+        push!(xml_nodes, make_xml(shape_updated, current_id, relationship_map))
+        current_id += 1
+    end
+    return xml_nodes
+end
+
+function make_slide(
+    s::Slide,
+    relationship_map::Dict = slide_relationship_map(s);
+    slide_size_x::Int = Int(13.333 * _EMUS_PER_INCH),
+    slide_size_y::Int = Int(7.5 * _EMUS_PER_INCH),
+)::AbstractDict
     xml_slide = OrderedDict("p:sld" => main_attributes())
 
     spTree = init_sptree()
-    initial_max_id = 1
-    for (index, shape) in enumerate(shapes(s))
-        id = index + initial_max_id
-        push!(spTree["p:spTree"], make_xml(shape, id, relationship_map))
+    next_id = 2
+    for shape in shapes(s)
+        xml_nodes = _make_xml_nodes(shape, next_id, relationship_map, slide_size_x, slide_size_y)
+        append!(spTree["p:spTree"], xml_nodes)
+        next_id += length(xml_nodes)
     end
 
     push!(xml_slide["p:sld"], OrderedDict("p:cSld" => [spTree]))

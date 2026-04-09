@@ -132,9 +132,9 @@ function _make_xml_nodes(
     xml_nodes = Any[]
     current_id = start_id
     for (shape, row_range, col_range) in layout._entries
-        offset_x, offset_y, size_x, size_y =
-            layout_bounds(layout, row_range, col_range, slide_size_x, slide_size_y)
-        shape_updated = set_geometry(shape, offset_x, offset_y, size_x, size_y)
+        geom = layout_bounds(layout, row_range, col_range, slide_size_x, slide_size_y)
+        geom = geometry_in_span(shape, geom, layout.rescale)
+        shape_updated = set_geometry(shape, geom)
         _bind_relationships!(relationship_map, shape, shape_updated)
         push!(xml_nodes, make_xml(shape_updated, current_id, relationship_map))
         current_id += 1

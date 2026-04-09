@@ -28,8 +28,9 @@ GridMargins(nt::NamedTuple) = GridMargins(; nt...)
     GridLayout(
         nrows::Int, 
         ncols::Int; 
-        padding::Real=5.0, 
-        margins=(left = padding, right = padding, top = padding, bottom = padding)
+        padding::Real=5.0,
+        margins=(left = padding, right = padding, top = padding, bottom = padding),
+        rescale::Bool=true,
     )
 
 A declarative grid layout that distributes shapes evenly across a slide.
@@ -45,7 +46,9 @@ push!(slide, layout)
 
 Cell positions and sizes are resolved at write time from the actual slide dimensions.
 `padding` (in mm) is applied between cells and at the slide edges.
-Shapes are stretched to fill their assigned cell area (including any column/row span).
+When `rescale=true` (default), pictures/videos preserve their aspect ratio and are
+centered within the assigned cell span. With `rescale=false`, they are stretched
+to fill the assigned span.
 
 Rules:
 - Empty cells are silently skipped.
@@ -56,6 +59,7 @@ mutable struct GridLayout <: AbstractShape
     ncols::Int
     padding::Float64
     margins::GridMargins
+    rescale::Bool
     _entries::Vector{Tuple{AbstractShape,UnitRange{Int},UnitRange{Int}}}
 end
 
@@ -70,8 +74,9 @@ end
 function GridLayout(
     nrows::Int, 
     ncols::Int; 
-    padding::Real=5.0, 
+    padding::Real=5.0,
     margins=(left = padding, right = padding, top = padding, bottom = padding),
+    rescale::Bool=true,
 )
     nrows > 0 || throw(ArgumentError("nrows must be positive"))
     ncols > 0 || throw(ArgumentError("ncols must be positive"))
@@ -84,6 +89,7 @@ function GridLayout(
         ncols,
         mm_to_emu(padding),
         grid_margins,
+        rescale,
         Tuple{AbstractShape,UnitRange{Int},UnitRange{Int}}[],
     )
 end
@@ -153,7 +159,7 @@ function layout_bounds(
     size_x = Int(round((last_col - first_col + 1) * cell_width + (length(col_range) - 1) * gap))
     size_y = Int(round((last_row - first_row + 1) * cell_height + (length(row_range) - 1) * gap))
 
-    return offset_x, offset_y, size_x, size_y
+    return Geometry(offset_x, offset_y, size_x, size_y)
 end
 
 function _show_string(layout::GridLayout, compact::Bool)

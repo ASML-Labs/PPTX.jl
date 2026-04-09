@@ -367,13 +367,13 @@ struct TextBox<: AbstractShape
     end
 end
 
-function set_geometry(t::TextBox, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int)
+function set_geometry(t::TextBox, geom::Geometry)
     return TextBox(
         t.content,
-        offset_x,
-        offset_y,
-        size_x,
-        size_y,
+        geom.offset_x,
+        geom.offset_y,
+        geom.size_x,
+        geom.size_y,
         t.hlink,
         t.color,
         t.linecolor,

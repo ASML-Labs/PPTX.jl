@@ -5,6 +5,7 @@
         @test layout.ncols == 3
         @test layout.padding == PPTX.mm_to_emu(5)
         @test layout.margins == PPTX.GridMargins(5)
+        @test layout.rescale == true
         @test isempty(layout._entries)
 
         layout_p = GridLayout(3, 3; padding=10)
@@ -132,7 +133,8 @@
         slide = Slide()
         layout = GridLayout(2, 2; padding=10)
         layout[1, 1] = TextBox("Title")
-        layout[2, :] = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"); size_x=10, size_y=10)
+        pic = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"))
+        layout[2, :] = pic
         push!(slide, layout)
 
         xml = PPTX.make_slide(
@@ -146,14 +148,45 @@
         text_sp = sp_tree[3]["p:sp"]
         pic_sp = sp_tree[4]["p:pic"]
 
+        # size of a grid cell for this slide size and layout dimensions, after accounting for padding and margins
+        cell_x_size = PPTX.mm_to_emu(35)
+        cell_y_size = PPTX.mm_to_emu(10)
+
         text_xfrm = text_sp[2]["p:spPr"][1]["a:xfrm"]
         text_off = only(filter(x -> haskey(x, "a:off"), text_xfrm))["a:off"]
         text_ext = only(filter(x -> haskey(x, "a:ext"), text_xfrm))["a:ext"]
+        @test text_ext[1]["cx"] == string(cell_x_size)
+        @test text_ext[2]["cy"] == string(cell_y_size)
         @test text_off[1]["x"] == string(PPTX.mm_to_emu(10))
         @test text_off[2]["y"] == string(PPTX.mm_to_emu(10))
-        @test text_ext[1]["cx"] == string(PPTX.mm_to_emu(35))
-        @test text_ext[2]["cy"] == string(PPTX.mm_to_emu(10))
 
+        # default rescale=true keeps ratio for Picture and centers it in span.
+        pic_xfrm = pic_sp[3]["p:spPr"][1]["a:xfrm"]
+        pic_off = pic_xfrm[1]["a:off"]
+        pic_ext = pic_xfrm[2]["a:ext"]
+        ratio = pic.size_x / pic.size_y
+        scaled_y = Int(round(cell_y_size * ratio))
+        @test pic_ext[1]["cx"] == string(scaled_y)
+        @test pic_ext[2]["cy"] == string(cell_y_size)
+        centered_x = PPTX.mm_to_emu(45) + Int(round((cell_y_size - scaled_y) / 2))
+        @test pic_off[1]["x"] == string(centered_x)
+        @test pic_off[2]["y"] == string(PPTX.mm_to_emu(30))
+    end
+
+    @testset "make_slide picture rescale=false stretches" begin
+        slide = Slide()
+        layout = GridLayout(2, 2; padding=10, rescale=false)
+        layout[2, :] = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"); size_x=10, size_y=10)
+        push!(slide, layout)
+
+        xml = PPTX.make_slide(
+            slide;
+            slide_size_x=PPTX.mm_to_emu(100),
+            slide_size_y=PPTX.mm_to_emu(50),
+        )
+
+        sp_tree = xml["p:sld"][end]["p:cSld"][1]["p:spTree"]
+        pic_sp = sp_tree[3]["p:pic"]
         pic_xfrm = pic_sp[3]["p:spPr"][1]["a:xfrm"]
         pic_off = pic_xfrm[1]["a:off"]
         pic_ext = pic_xfrm[2]["a:ext"]

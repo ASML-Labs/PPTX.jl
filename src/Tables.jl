@@ -108,13 +108,13 @@ struct Table <: AbstractShape
     end
 end
 
-function set_geometry(t::Table, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int)
+function set_geometry(t::Table, geom::Geometry)
     return Table(
         t.content,
-        offset_x,
-        offset_y,
-        size_x,
-        size_y,
+        geom.offset_x,
+        geom.offset_y,
+        geom.size_x,
+        geom.size_y,
         t.column_widths,
         t.row_heights,
         t.header,

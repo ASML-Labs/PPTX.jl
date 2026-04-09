@@ -53,12 +53,16 @@ function set_rid(v::Video, i::Int)
     return Video(v.source, v.offset_x, v.offset_y, v.size_x, v.size_y, i)
 end
 
-function set_geometry(v::Video, offset_x::Int, offset_y::Int, size_x::Int, size_y::Int)
-    return Video(v.source, offset_x, offset_y, size_x, size_y, v.rid, v._uuid)
-end
-
 rid(v::Video) = v.rid
 has_rid(v::Video) = true
+
+function set_geometry(v::Video, geom::Geometry)
+    return Video(v.source, geom.offset_x, geom.offset_y, geom.size_x, geom.size_y, v.rid, v._uuid)
+end
+
+function geometry_in_span(s::Video, geom::Geometry, rescale::Bool)
+    geometry_in_span(get_geometry(s), geom, rescale)
+end
 
 function _show_string(v::Video, compact::Bool)
     show_string = "Video"

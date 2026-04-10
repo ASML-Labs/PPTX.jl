@@ -145,8 +145,8 @@ end
 function make_slide(
     s::Slide,
     relationship_map::Dict = slide_relationship_map(s);
-    slide_size_x::Int = Int(13.333 * _EMUS_PER_INCH),
-    slide_size_y::Int = Int(7.5 * _EMUS_PER_INCH),
+    slide_size_x::Int = inch_to_emu(13.333), # default 16:9 aspect ratio
+    slide_size_y::Int = inch_to_emu(7.5),
 )::AbstractDict
     xml_slide = OrderedDict("p:sld" => main_attributes())
 

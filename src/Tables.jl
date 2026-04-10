@@ -321,13 +321,6 @@ end
 
 has_margins(c::TableCell) = has_margins(c.margins)
 
-anchor_string(::Nothing) = nothing
-function anchor_string(x)
-    s = string(x)
-    @assert s in ("top", "bottom", "center") "unknown table cell anchor $s, must be top, bottom or center"
-    return s
-end
-
 text_direction(::Nothing) = nothing
 function text_direction(x)
     s = string(x)
@@ -632,18 +625,8 @@ function solid_fill_color(color::Missing)
 end
 
 function make_anchor(t::TableCell)
-    if isnothing(t.anchor)
-        return nothing
-    elseif t.anchor == "center"
-        anchor = "ctr"
-    elseif t.anchor == "top"
-        anchor = "t"
-    elseif t.anchor == "bottom"
-        anchor = "b"
-    else
-        error("unknown table cell anchor \"$(t.anchor)\"")
-    end
-    return Dict("anchor" => anchor)
+    isnothing(t.anchor) && return nothing
+    return make_anchor_dict(t.anchor)
 end
 
 function make_single_val_extLst(uri::String, type::String, val::Integer = rand(UInt32))

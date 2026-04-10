@@ -92,6 +92,25 @@ function align_string(x)
     return s
 end
 
+anchor_string(::Nothing) = nothing
+function anchor_string(x)
+    s = string(x)
+    @assert s in ("top", "center", "bottom") "unknown anchor $s, must be top, center or bottom"
+    return s
+end
+
+function make_anchor_dict(anchor::String)
+    if anchor == "center"
+        return Dict("anchor" => "ctr")
+    elseif anchor == "bottom"
+        return Dict("anchor" => "b")
+    elseif anchor == "top"
+        return Dict("anchor" => "t")
+    else
+        error("unknown anchor \"$anchor\"")
+    end
+end
+
 TextStyle(style::TextStyle) = style
 
 function TextStyle(style::AbstractDict{String})
@@ -181,6 +200,7 @@ Base.@kwdef struct TextBody
     style::TextStyle = TextStyle()
     margins::Margins = Margins()
     wrap::Bool = false
+    anchor::Union{Nothing, String} = nothing
     body_properties::Union{Nothing, AbstractVector} = default_body_properties()
 end
 
@@ -254,6 +274,7 @@ function TextBox(;
     textstyle = (italic = false, bold = false, fontsize = nothing),
     margins = nothing, # e.g. (left=0.1, right=0.1, bottom=0.1, top=0.1) in millimeters
     wrap = false, # wrap text in shape or not
+    anchor = nothing, # "top", "center" or "bottom"
 )
 ```
 
@@ -344,6 +365,7 @@ struct TextBox<: AbstractShape
         rotation::Union{Nothing, Real} = nothing,
         margins = Margins(),
         wrap = false,
+        anchor = nothing,
     )
         # input is in mm
         return new(
@@ -352,6 +374,7 @@ struct TextBox<: AbstractShape
                 TextStyle(style),
                 Margins(margins),
                 wrap,
+                anchor_string(anchor),
                 default_body_properties()
             ),
             mm_to_emu(offset_x),
@@ -388,8 +411,9 @@ function rotation_value(x::Real)
 end
 
 # keyword argument constructor
-function TextBox(;
-    content::AbstractString="",
+function TextBox(
+    text::AbstractString="";
+    content::AbstractString=text,
     offset=(50,50),
     offset_x::Real=offset[1], # millimeters
     offset_y::Real=offset[2], # millimeters
@@ -406,6 +430,7 @@ function TextBox(;
     rotation::Union{Nothing, Real}=nothing,
     margins=Margins(),
     wrap=false,
+    anchor=nothing,
 )
     return TextBox(
         content,
@@ -421,10 +446,9 @@ function TextBox(;
         rotation,
         margins,
         wrap,
+        anchor,
     )
 end
-
-TextBox(content::String; kwargs...) = TextBox(;content=content, kwargs...)
 
 function _show_string(p::TextBox, compact::Bool)
     show_string = "TextBox"
@@ -579,6 +603,9 @@ function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
     end
     if has_margins(t)
         append!(bodyPr, make_body_properties_xml(t.margins))
+    end
+    if !isnothing(t.anchor)
+        push!(bodyPr, make_anchor_dict(t.anchor))
     end
 
     txBody = Dict(

@@ -16,7 +16,7 @@ s = Slide(; title="Layout demo slide")
 text = TextBox(
         content="welcome to layouting in PPTX.jl\n here we use a 2x2 grid", 
         textstyle=(align=:center, fontsize=30),
-        margins=(top=2,),
+        anchor=:center,
         linecolor=:black,
         wrap=true
     )

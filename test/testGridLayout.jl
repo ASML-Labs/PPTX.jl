@@ -195,4 +195,10 @@
         @test pic_ext[1]["cx"] == string(PPTX.mm_to_emu(80))
         @test pic_ext[2]["cy"] == string(PPTX.mm_to_emu(10))
     end
+
+    @testset "nested layouts not supported" begin
+        layout = GridLayout(2, 2)
+        nested_layout = GridLayout(1, 1)
+        @test_throws ErrorException (layout[1, 1] = nested_layout)
+    end
 end

@@ -60,8 +60,8 @@ function set_geometry(v::Video, geom::Geometry)
     return Video(v.source, geom.offset_x, geom.offset_y, geom.size_x, geom.size_y, v.rid, v._uuid)
 end
 
-function geometry_in_span(s::Video, geom::Geometry, rescale::Bool)
-    geometry_in_span(get_geometry(s), geom, rescale)
+function geometry_in_span(s::Video, geom::Geometry, keepratio::Bool)
+    geometry_in_span(get_geometry(s), geom, keepratio)
 end
 
 function _show_string(v::Video, compact::Bool)

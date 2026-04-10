@@ -105,8 +105,8 @@ function set_geometry(s::Picture, geom::Geometry)
     return Picture(s.source, geom.offset_x, geom.offset_y, geom.size_x, geom.size_y, s.rid, s._uuid)
 end
 
-function geometry_in_span(s::Picture, geom::Geometry, rescale::Bool)
-    geometry_in_span(get_geometry(s), geom, rescale)
+function geometry_in_span(s::Picture, geom::Geometry, keepratio::Bool)
+    geometry_in_span(get_geometry(s), geom, keepratio)
 end
 
 function _show_string(p::Picture, compact::Bool)

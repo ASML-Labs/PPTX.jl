@@ -4,11 +4,11 @@
         @test layout.nrows == 2
         @test layout.ncols == 3
         @test layout.padding == PPTX.mm_to_emu(5)
-        @test layout.margins == PPTX.GridMargins(5)
-        @test layout.rescale == true
+        @test layout.margins == PPTX.GridMargins(; left=5, right=5, top=40, bottom=5)
+        @test layout.keepratio == true
         @test isempty(layout._entries)
 
-        layout_p = GridLayout(3, 3; padding=10)
+        layout_p = GridLayout(3, 3; padding=10, margins = 10)
         @test layout_p.padding == PPTX.mm_to_emu(10)
         @test layout_p.margins == PPTX.GridMargins(10)
 
@@ -131,7 +131,7 @@
 
     @testset "make_slide places grid shapes" begin
         slide = Slide()
-        layout = GridLayout(2, 2; padding=10)
+        layout = GridLayout(2, 2; padding=10, margins=10)
         layout[1, 1] = TextBox("Title")
         pic = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"))
         layout[2, :] = pic
@@ -160,7 +160,7 @@
         @test text_off[1]["x"] == string(PPTX.mm_to_emu(10))
         @test text_off[2]["y"] == string(PPTX.mm_to_emu(10))
 
-        # default rescale=true keeps ratio for Picture and centers it in span.
+        # default keepratio=true keeps ratio for Picture and centers it in span.
         pic_xfrm = pic_sp[3]["p:spPr"][1]["a:xfrm"]
         pic_off = pic_xfrm[1]["a:off"]
         pic_ext = pic_xfrm[2]["a:ext"]
@@ -173,9 +173,9 @@
         @test pic_off[2]["y"] == string(PPTX.mm_to_emu(30))
     end
 
-    @testset "make_slide picture rescale=false stretches" begin
+    @testset "make_slide picture keepratio=false stretches" begin
         slide = Slide()
-        layout = GridLayout(2, 2; padding=10, rescale=false)
+        layout = GridLayout(2, 2; padding=10, margins=10, keepratio=false)
         layout[2, :] = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"); size_x=10, size_y=10)
         push!(slide, layout)
 

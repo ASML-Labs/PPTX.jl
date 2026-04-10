@@ -29,8 +29,8 @@ GridMargins(nt::NamedTuple) = GridMargins(; nt...)
         nrows::Int, 
         ncols::Int; 
         padding::Real=5.0,
-        margins=(left = padding, right = padding, top = padding, bottom = padding),
-        rescale::Bool=true,
+        margins=(left = 5, right = 5, top = 40, bottom = 5),
+        keepratio::Bool=true,
     )
 
 A declarative grid layout that distributes shapes evenly across a slide.
@@ -38,16 +38,16 @@ A declarative grid layout that distributes shapes evenly across a slide.
 Shapes are placed in cells via `setindex!` using integer indices, ranges or colons:
 
 ```julia
-layout = GridLayout(2, 2)
+layout = GridLayout(2, 2; margins=10)
 layout[1, 1] = TextBox("Title")
 layout[2, :] = Picture("plot.png")  # spans both columns in row 2
 push!(slide, layout)
 ```
 
 Cell positions and sizes are resolved at write time from the actual slide dimensions.
-`padding` (in mm) is applied between cells and at the slide edges.
-When `rescale=true` (default), pictures/videos preserve their aspect ratio and are
-centered within the assigned cell span. With `rescale=false`, they are stretched
+`padding` (in mm) is applied between cells and `margins` at the slide edges.
+When `keepratio=true` (default), pictures/videos preserve their aspect ratio and are
+centered within the assigned cell span. With `keepratio=false`, they are stretched
 to fill the assigned span.
 
 Rules:
@@ -59,7 +59,7 @@ mutable struct GridLayout <: AbstractShape
     ncols::Int
     padding::Float64
     margins::GridMargins
-    rescale::Bool
+    keepratio::Bool
     _entries::Vector{Tuple{AbstractShape,UnitRange{Int},UnitRange{Int}}}
 end
 
@@ -75,8 +75,9 @@ function GridLayout(
     nrows::Int, 
     ncols::Int; 
     padding::Real=5.0,
-    margins=(left = padding, right = padding, top = padding, bottom = padding),
-    rescale::Bool=true,
+    # default bigger top margin to handle titles
+    margins=(left = 5, right = 5, top = 40, bottom = 5),
+    keepratio::Bool=true,
 )
     nrows > 0 || throw(ArgumentError("nrows must be positive"))
     ncols > 0 || throw(ArgumentError("ncols must be positive"))
@@ -89,7 +90,7 @@ function GridLayout(
         ncols,
         mm_to_emu(padding),
         grid_margins,
-        rescale,
+        keepratio,
         Tuple{AbstractShape,UnitRange{Int},UnitRange{Int}}[],
     )
 end
@@ -128,12 +129,16 @@ function Base.setindex!(layout::GridLayout, shape::AbstractShape, row_idx, col_i
     return shape
 end
 
-function layout_bounds(
+function Base.setindex!(layout::GridLayout, shape::GridLayout, row_idx, col_idx)
+    error("we do not yet supported nested GridLayouts")
+end
+
+function gridlayout_geometry(
     layout::GridLayout,
     row_range::UnitRange{Int},
     col_range::UnitRange{Int},
-    slide_size_x::Int,
-    slide_size_y::Int,
+    grid_size_x::Int,
+    grid_size_y::Int,
 )
     left_margin = layout.margins.left
     right_margin = layout.margins.right
@@ -141,8 +146,8 @@ function layout_bounds(
     bottom_margin = layout.margins.bottom
     gap = Int(round(layout.padding))
 
-    usable_width = slide_size_x - left_margin - right_margin - (layout.ncols - 1) * gap
-    usable_height = slide_size_y - top_margin - bottom_margin - (layout.nrows - 1) * gap
+    usable_width = grid_size_x - left_margin - right_margin - (layout.ncols - 1) * gap
+    usable_height = grid_size_y - top_margin - bottom_margin - (layout.nrows - 1) * gap
     usable_width > 0 || throw(ArgumentError("GridLayout has non-positive usable width"))
     usable_height > 0 || throw(ArgumentError("GridLayout has non-positive usable height"))
 

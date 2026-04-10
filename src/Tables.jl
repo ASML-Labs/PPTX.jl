@@ -287,8 +287,8 @@ TableCell(
     textstyle = TextStyle(),
     color = nothing, # background color of the table element
     anchor = nothing, # anchoring of text in the cell, can be "top", "bottom" or "center"
-    lines,
-    margins,
+    lines, # for example (bottom = (width=1, color=:white, dash = "solid"),)
+    margins, # for example (left=0.1, right=0.1, top=0.1, bottom=0.1) in mm
 )
 ```
 

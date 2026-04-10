@@ -23,11 +23,11 @@ function get_geometry(s::AbstractShape)
 end
 
 # default no geometry rescaling (e.g. for TextBox, where the text should fill the cell span without changing the aspect ratio)
-geometry_in_span(s::AbstractShape, geom::Geometry, rescale::Bool) = geom
+geometry_in_span(s::AbstractShape, geom::Geometry, keepratio::Bool) = geom
 
 # geometry rescaling re-used by Picture and Video, keeps the ratio constant
-function geometry_in_span(shape_geom::Geometry, span::Geometry, rescale::Bool)
-    if !rescale || shape_geom.size_x <= 0 || shape_geom.size_y <= 0 || span.size_x <= 0 || span.size_y <= 0
+function geometry_in_span(shape_geom::Geometry, span::Geometry, keepratio::Bool)
+    if !keepratio || shape_geom.size_x <= 0 || shape_geom.size_y <= 0 || span.size_x <= 0 || span.size_y <= 0
         return span
     end
 

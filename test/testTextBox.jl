@@ -53,9 +53,11 @@
 
         b = TextBox("bla", anchor = :center)
         @test b.content.anchor == "center"
+        b = TextBox("bla", anchor = :middle)
+        @test b.content.anchor == "center"
         b = TextBox("bla", anchor = "bottom")
         @test b.content.anchor == "bottom"
         b = TextBox("bla")
         @test b.content.anchor === nothing
-        @test_throws AssertionError TextBox("bla", anchor = "middle")
+        @test_throws AssertionError TextBox("bla", anchor = "banana")
     end

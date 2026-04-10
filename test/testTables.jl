@@ -20,6 +20,24 @@ using Colors
     @test_throws AssertionError Table(rand(3,2); row_heights = [20,])
 end
 
+@testset "Table set geometry" begin
+    content = TableCell.(rand(3,2);anchor=:center)
+    t = Table(content, header=false, bandrow=false)
+
+    # this is in EMUs
+    geom = PPTX.Geometry(100, 100, 200, 150)
+    t2 = PPTX.set_geometry(t, geom)
+
+    @test t2.offset_x == 100
+    @test t2.offset_y == 100
+    @test t2.size_x == 200
+    @test t2.size_y == 150
+    @test t2.content === content
+    @test t2.header == t.header
+    @test t2.bandrow == t.bandrow
+    @test t2.style_id == t.style_id
+end
+
 @testset "PPTX Tables from a DataFrame" begin
     lines = PPTX.TableLines(left=(width=1,))
     @test lines.left.width == 12700 # EMUs
@@ -33,6 +51,7 @@ end
 
     t_margins = TableCell(3; margins=(bottom=0.1,))
     @test PPTX.has_margins(t_margins)
+    @test PPTX.has_tc_properties(t_margins)
     @test t_margins.margins.bottom == 36000
     @test t_margins.margins.left === nothing
 
@@ -42,6 +61,9 @@ end
     @test lines.top.color == hex(colorant"green")
     @test PPTX.has_tc_properties(t4)
     @test !PPTX.has_margins(t4)
+
+    @test PPTX.has_tc_properties(TableCell(1; anchor=:center))
+    @test PPTX.has_tc_properties(TableCell(1; direction=:vert))
 
     t3 = TableCell(
         3;

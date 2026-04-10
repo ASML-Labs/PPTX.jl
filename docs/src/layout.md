@@ -14,15 +14,16 @@ p = Presentation(title="GridLayout demo", author="PPTX.jl")
 s = Slide(; title="Layout demo slide")
 
 text = TextBox(
-        content="welcome to layouting in PPTX.jl\n here we use a 2x2 grid", 
-        textstyle=(align=:center, fontsize=30),
-        anchor=:center,
-        linecolor=:black,
-        wrap=true
-    )
+    content="welcome to layouting in PPTX.jl\n here we use a 2x2 grid", 
+    textstyle=(align=:center, fontsize=30),
+    anchor=:center,
+    linecolor=:black,
+    wrap=true
+)
 table_cells = TableCell.(
     reshape(1:9, 3,3); 
     textstyle=(fontsize=20, align=:center),
+    anchor=:center
 )
 table = Table(table_cells, bandrow=false)
 

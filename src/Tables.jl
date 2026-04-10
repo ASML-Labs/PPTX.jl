@@ -64,20 +64,29 @@ struct Table <: AbstractShape
         row_heights::Union{Nothing, Vector{Int}} = nothing,
         header::Bool = true,
         bandrow::Bool = true,
-        style_id::String="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}",
+        style_id::String="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}";
+        convert_to_emu::Bool=true,
     )
         # input is in mm
+        if convert_to_emu
+            offset_x = mm_to_emu(offset_x)
+            offset_y = mm_to_emu(offset_y)
+            size_x = mm_to_emu(size_x)
+            size_y = mm_to_emu(size_y)
+            column_widths = mm_to_emu(column_widths)
+            row_heights = mm_to_emu(row_heights)
+        end
         return new(
             content,
-            mm_to_emu(offset_x),
-            mm_to_emu(offset_y),
-            mm_to_emu(size_x),
-            mm_to_emu(size_y),
-            mm_to_emu(column_widths),
-            mm_to_emu(row_heights),
+            offset_x,
+            offset_y,
+            size_x,
+            size_y,
+            column_widths,
+            row_heights,
             header,
             bandrow,
-            style_id,
+            style_id
         )
     end
 end
@@ -93,7 +102,8 @@ function set_geometry(t::Table, geom::Geometry)
         t.row_heights,
         t.header,
         t.bandrow,
-        t.style_id,
+        t.style_id;
+        convert_to_emu=false,
     )
 end
 
@@ -316,7 +326,11 @@ function TableCell(;
 end
 
 function has_tc_properties(c::TableCell)
-    return !isnothing(c.color) || has_lines(c.lines)
+    return !isnothing(c.color) || 
+        !isnothing(c.anchor) || 
+        !isnothing(c.direction) || 
+        has_lines(c.lines) ||
+        has_margins(c.margins)
 end
 
 has_margins(c::TableCell) = has_margins(c.margins)

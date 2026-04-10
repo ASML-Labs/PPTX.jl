@@ -95,7 +95,10 @@ end
 anchor_string(::Nothing) = nothing
 function anchor_string(x)
     s = string(x)
-    @assert s in ("top", "center", "bottom") "unknown anchor $s, must be top, center or bottom"
+    @assert s in ("top", "center", "middle", "bottom") "unknown anchor $s, must be top, center or bottom"
+    if s == "middle"
+        s = "center"
+    end
     return s
 end
 

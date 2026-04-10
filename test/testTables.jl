@@ -7,6 +7,10 @@ using Colors
 
 @testset "PPTX Tables from a Matrix" begin
     t = Table(rand(3,2))
+    @test t.size_x = PPTX.mm_to_emu(150)
+    @test t.size_y = PPTX.mm_to_emu(100)
+    @test t.offset_x = PPTX.mm_to_emu(50)
+    @test t.offset_y = PPTX.mm_to_emu(50)
     @test t.header == false
 
     @test PPTX.ncols(t) == 2

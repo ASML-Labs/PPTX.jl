@@ -64,22 +64,47 @@ struct Table <: AbstractShape
         row_heights::Union{Nothing, Vector{Int}} = nothing,
         header::Bool = true,
         bandrow::Bool = true,
-        style_id::String="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}",
+        style_id::String="{5C22544A-7EE6-4342-B048-85BDC9FD1C3A}";
+        convert_to_emu::Bool=true,
     )
         # input is in mm
+        if convert_to_emu
+            offset_x = mm_to_emu(offset_x)
+            offset_y = mm_to_emu(offset_y)
+            size_x = mm_to_emu(size_x)
+            size_y = mm_to_emu(size_y)
+            column_widths = mm_to_emu(column_widths)
+            row_heights = mm_to_emu(row_heights)
+        end
         return new(
             content,
-            mm_to_emu(offset_x),
-            mm_to_emu(offset_y),
-            mm_to_emu(size_x),
-            mm_to_emu(size_y),
-            mm_to_emu(column_widths),
-            mm_to_emu(row_heights),
+            offset_x,
+            offset_y,
+            size_x,
+            size_y,
+            column_widths,
+            row_heights,
             header,
             bandrow,
-            style_id,
+            style_id
         )
     end
+end
+
+function set_geometry(t::Table, geom::Geometry)
+    return Table(
+        t.content,
+        geom.offset_x,
+        geom.offset_y,
+        geom.size_x,
+        geom.size_y,
+        t.column_widths,
+        t.row_heights,
+        t.header,
+        t.bandrow,
+        t.style_id;
+        convert_to_emu=false,
+    )
 end
 
 # keyword argument constructor
@@ -246,8 +271,8 @@ TableCell(
     textstyle = TextStyle(),
     color = nothing, # background color of the table element
     anchor = nothing, # anchoring of text in the cell, can be "top", "bottom" or "center"
-    lines,
-    margins,
+    lines, # for example (bottom = (width=1, color=:white, dash = "solid"),)
+    margins, # for example (left=0.1, right=0.1, top=0.1, bottom=0.1) in mm
 )
 ```
 
@@ -301,17 +326,14 @@ function TableCell(;
 end
 
 function has_tc_properties(c::TableCell)
-    return !isnothing(c.color) || has_lines(c.lines)
+    return !isnothing(c.color) || 
+        !isnothing(c.anchor) || 
+        !isnothing(c.direction) || 
+        has_lines(c.lines) ||
+        has_margins(c.margins)
 end
 
 has_margins(c::TableCell) = has_margins(c.margins)
-
-anchor_string(::Nothing) = nothing
-function anchor_string(x)
-    s = string(x)
-    @assert s in ("top", "bottom", "center") "unknown table cell anchor $s, must be top, bottom or center"
-    return s
-end
 
 text_direction(::Nothing) = nothing
 function text_direction(x)
@@ -617,18 +639,8 @@ function solid_fill_color(color::Missing)
 end
 
 function make_anchor(t::TableCell)
-    if isnothing(t.anchor)
-        return nothing
-    elseif t.anchor == "center"
-        anchor = "ctr"
-    elseif t.anchor == "top"
-        anchor = "t"
-    elseif t.anchor == "bottom"
-        anchor = "b"
-    else
-        error("unknown table cell anchor \"$(t.anchor)\"")
-    end
-    return Dict("anchor" => anchor)
+    isnothing(t.anchor) && return nothing
+    return make_anchor_dict(t.anchor)
 end
 
 function make_single_val_extLst(uri::String, type::String, val::Integer = rand(UInt32))

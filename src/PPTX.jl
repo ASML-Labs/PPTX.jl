@@ -13,13 +13,14 @@ import Tables: columns, columnnames, rows
 
 import Colors: Colorant, hex, @colorant_str
 
-export Presentation, Slide, TextBox, TextStyle, Picture, Table, TableCell, list_layoutnames, Video
+export Presentation, Slide, TextBox, TextStyle, Picture, Table, TableCell, list_layoutnames, Video, GridLayout
 
 include("AbstractShape.jl")
 include("constants.jl")
 include("TextBox.jl")
 include("Picture.jl")
 include("Tables.jl")
+include("GridLayout.jl")
 include("Slide.jl")
 include("Presentation.jl")
 include("Video.jl")

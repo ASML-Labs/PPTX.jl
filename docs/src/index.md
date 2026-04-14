@@ -74,5 +74,5 @@ Presentation with 4 slides
 Finally you can write the PPTX file with `PPTX.write`:
 
 ```julia
-PPTX.write("example.pptx", pres, overwrite = true, open_ppt=true)
+write("example.pptx", pres, overwrite = true, open_ppt=true)
 ```

@@ -20,7 +20,7 @@ end
     mktempdir() do tmpdir
         filename = "testfile-layout"
         output_pptx = abspath(joinpath(tmpdir, "$filename.pptx"))
-        PPTX.write(output_pptx, pres)
+        PPTX.write(output_pptx, pres; open_ppt=false)
     end
 
     @test pres.slides[2].layout == 5
@@ -38,7 +38,7 @@ end
             filename = "testfile-layout_number_not_defined"
             output_pptx = abspath(joinpath(tmpdir, "$filename.pptx"))
             err_msg = "Slide layout number 12 not defined in the template"
-            @test_throws ErrorException(err_msg)  PPTX.write(output_pptx, pres)
+            @test_throws ErrorException(err_msg)  PPTX.write(output_pptx, pres; open_ppt=false)
         end
     end
 

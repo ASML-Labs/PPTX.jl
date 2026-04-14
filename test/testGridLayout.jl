@@ -135,6 +135,9 @@
         layout[1, 1] = TextBox("Title")
         pic = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"))
         layout[2, :] = pic
+        # also test Video in layout
+        video_path = joinpath(PPTX.ASSETS_DIR, "sample_video.mp4")
+        layout[1, 2] = Video(video_path; size_x=10, size_y=10)
         push!(slide, layout)
 
         sz = PPTX.SlideSize(PPTX.mm_to_emu(100), PPTX.mm_to_emu(50))
@@ -147,6 +150,7 @@
         # spTree contains 2 group entries first, then our 2 layout shapes
         text_sp = sp_tree[3]["p:sp"]
         pic_sp = sp_tree[4]["p:pic"]
+        vid_sp = sp_tree[5]["p:pic"]
 
         # size of a grid cell for this slide size and layout dimensions, after accounting for padding and margins
         cell_x_size = PPTX.mm_to_emu(35)
@@ -171,6 +175,14 @@
         centered_x = PPTX.mm_to_emu(45) + Int(round((cell_y_size - scaled_y) / 2))
         @test pic_off[1]["x"] == string(centered_x)
         @test pic_off[2]["y"] == string(PPTX.mm_to_emu(30))
+
+        # Video should also be keepratio=true and centered in its span
+        vid_xfrm = vid_sp[3]["p:spPr"][1]["a:xfrm"]
+        vid_off = vid_xfrm[1]["a:off"]
+        @test vid_xfrm[2]["a:ext"][1]["cx"] == string(cell_y_size)
+        @test vid_xfrm[2]["a:ext"][2]["cy"] == string(cell_y_size)
+        @test vid_off[1]["x"] == string(PPTX.mm_to_emu(50 + 35/2))
+        @test vid_off[2]["y"] == string(PPTX.mm_to_emu(10))
     end
 
     @testset "make_slide picture keepratio=false stretches" begin

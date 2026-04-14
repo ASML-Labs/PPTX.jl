@@ -116,14 +116,14 @@ function Base.push!(slide::Slide, layout::GridLayout)
     return push!(shapes(slide), layout)
 end
 
-function _bind_relationships!(relationship_map::Dict, original_shape::AbstractShape, updated_shape::AbstractShape)
+function update_relationship!(relationship_map::Dict, original_shape::AbstractShape, updated_shape::AbstractShape)
     if has_rid(original_shape) && haskey(relationship_map, original_shape)
         relationship_map[updated_shape] = relationship_map[original_shape]
     end
     return nothing
 end
 
-function _make_xml_nodes(
+function make_xml_shapes(
     shape::AbstractShape,
     start_id::Int,
     relationship_map::Dict,
@@ -132,7 +132,7 @@ function _make_xml_nodes(
     return Any[make_xml(shape, start_id, relationship_map)]
 end
 
-function _make_xml_nodes(
+function make_xml_shapes(
     layout::GridLayout,
     start_id::Int,
     relationship_map::Dict,
@@ -144,7 +144,7 @@ function _make_xml_nodes(
         geom = gridlayout_geometry(layout, row_range, col_range, slide_size.x, slide_size.y)
         geom = geometry_in_span(shape, geom, layout.keepratio)
         shape_updated = set_geometry(shape, geom)
-        _bind_relationships!(relationship_map, shape, shape_updated)
+        update_relationship!(relationship_map, shape, shape_updated)
         push!(xml_nodes, make_xml(shape_updated, current_id, relationship_map))
         current_id += 1
     end
@@ -161,9 +161,9 @@ function make_slide(
     spTree = init_sptree()
     next_id = 2
     for shape in shapes(s)
-        xml_nodes = _make_xml_nodes(shape, next_id, relationship_map, slide_size)
-        append!(spTree["p:spTree"], xml_nodes)
-        next_id += length(xml_nodes)
+        xml_shapes = make_xml_shapes(shape, next_id, relationship_map, slide_size)
+        append!(spTree["p:spTree"], xml_shapes)
+        next_id += length(xml_shapes)
     end
 
     push!(xml_slide["p:sld"], OrderedDict("p:cSld" => [spTree]))
@@ -239,12 +239,12 @@ function relationship_xml(url::AbstractString, r_id::Integer)
     )
 end
 
-_nested_shapes(shape::AbstractShape) = (shape,)
+get_nested_shapes(shape::AbstractShape) = (shape,)
 
-function _nested_shapes(layout::GridLayout)
+function get_nested_shapes(layout::GridLayout)
     nested = AbstractShape[]
     for (shape, _, _) in layout._entries
-        append!(nested, _nested_shapes(shape))
+        append!(nested, get_nested_shapes(shape))
     end
     return nested
 end
@@ -253,7 +253,7 @@ function slide_relationship_map(s::Slide)
     d = Dict{Union{Slide, AbstractShape, AbstractString}, Int}()
     r_id = 1 # first rid is reserved by slideLayout
     for shape in shapes(s)
-        for nested_shape in _nested_shapes(shape)
+        for nested_shape in get_nested_shapes(shape)
             if has_rid(nested_shape) && !haskey(d, nested_shape)
                 r_id += 1
                 d[nested_shape] = r_id
@@ -286,7 +286,7 @@ function make_slide_relationships(s::Slide, relationship_map::Dict = slide_relat
     )
     used_r_ids = [1]
     for shape in shapes(s)
-        for nested_shape in _nested_shapes(shape)
+        for nested_shape in get_nested_shapes(shape)
             r_id = 1
             if has_rid(nested_shape)
                 r_id = relationship_map[nested_shape]

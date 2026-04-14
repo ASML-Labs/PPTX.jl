@@ -53,6 +53,7 @@ to fill the assigned span.
 Rules:
 - Empty cells are silently skipped.
 - Assigning to overlapping cell regions raises an `ArgumentError`.
+- Cannot nest `GridLayout`s inside each other (not yet implemented, will throw an error if attempted).
 """
 mutable struct GridLayout <: AbstractShape
     nrows::Int
@@ -130,7 +131,7 @@ function Base.setindex!(layout::GridLayout, shape::AbstractShape, row_idx, col_i
 end
 
 function Base.setindex!(layout::GridLayout, shape::GridLayout, row_idx, col_idx)
-    error("we do not yet supported nested GridLayouts")
+    error("we do not yet support nested GridLayouts")
 end
 
 function gridlayout_geometry(

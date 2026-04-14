@@ -55,23 +55,27 @@ function write_slides!(w::ZipWriter, p::Presentation, template::ZipBufferReader)
         error("input template pptx already contains slides, please use an empty template")
     end
     layoutmap = get_layoutnamemap(template)
-    sz = p._state.size
-    sz_x = isnothing(sz) ? Int(13.333 * _EMUS_PER_INCH) : sz.x
-    sz_y = isnothing(sz) ? Int(7.5 * _EMUS_PER_INCH) : sz.y
+    sz = slide_size(p)
     for (idx, slide) in enumerate(slides(p))
         layoutnametoint!(slide, layoutmap)
-        xml = make_slide(slide; slide_size_x=sz_x, slide_size_y=sz_y)
+
+        # write slide
+        xml = make_slide(slide; slide_size = sz)
         doc::EzXML.Document = xml_document(xml)
         add_title_shape!(doc, slide, template)
-        zip_newfile(w, "ppt/slides/slide$idx.xml"; compress=true)
-        print(w, doc)
-        zip_commitfile(w)
+        zip_write_doc(w, doc, "ppt/slides/slide$idx.xml")
+
+        # write slide relationships
         xml = make_slide_relationships(slide)
         doc = xml_document(xml)
-        zip_newfile(w, "ppt/slides/_rels/slide$idx.xml.rels"; compress=true)
-        print(w, doc)
-        zip_commitfile(w)
+        zip_write_doc(w, doc, "ppt/slides/_rels/slide$idx.xml.rels")
     end
+end
+
+function zip_write_doc(w::ZipWriter, doc::EzXML.Document, path::String)
+    zip_newfile(w, path; compress=true)
+    print(w, doc)
+    zip_commitfile(w)
 end
 
 function add_title_shape!(doc::EzXML.Document, slide::Slide, template::ZipBufferReader)

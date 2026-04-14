@@ -137,10 +137,10 @@
         layout[2, :] = pic
         push!(slide, layout)
 
+        sz = PPTX.SlideSize(PPTX.mm_to_emu(100), PPTX.mm_to_emu(50))
         xml = PPTX.make_slide(
             slide;
-            slide_size_x=PPTX.mm_to_emu(100),
-            slide_size_y=PPTX.mm_to_emu(50),
+            slide_size = sz,
         )
 
         sp_tree = xml["p:sld"][end]["p:cSld"][1]["p:spTree"]
@@ -179,10 +179,10 @@
         layout[2, :] = Picture(joinpath(PPTX.ASSETS_DIR, "julia_logo.emf"); size_x=10, size_y=10)
         push!(slide, layout)
 
+        sz = PPTX.SlideSize(PPTX.mm_to_emu(100), PPTX.mm_to_emu(50))
         xml = PPTX.make_slide(
             slide;
-            slide_size_x=PPTX.mm_to_emu(100),
-            slide_size_y=PPTX.mm_to_emu(50),
+            slide_size = sz,
         )
 
         sp_tree = xml["p:sld"][end]["p:cSld"][1]["p:spTree"]

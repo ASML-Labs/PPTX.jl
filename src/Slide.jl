@@ -1,3 +1,14 @@
+# used in Presentation to set all slide sizes
+struct SlideSize
+    x::Int # EMUs
+    y::Int # EMUs
+end
+
+# default slide size
+function SlideSize()
+    return SlideSize(inch_to_emu(13.333), inch_to_emu(7.5))
+end
+
 """
 ```julia
 Slide(
@@ -116,8 +127,7 @@ function _make_xml_nodes(
     shape::AbstractShape,
     start_id::Int,
     relationship_map::Dict,
-    slide_size_x::Int,
-    slide_size_y::Int,
+    slide_size::SlideSize,
 )
     return Any[make_xml(shape, start_id, relationship_map)]
 end
@@ -126,13 +136,12 @@ function _make_xml_nodes(
     layout::GridLayout,
     start_id::Int,
     relationship_map::Dict,
-    slide_size_x::Int,
-    slide_size_y::Int,
+    slide_size::SlideSize
 )
     xml_nodes = Any[]
     current_id = start_id
     for (shape, row_range, col_range) in layout._entries
-        geom = gridlayout_geometry(layout, row_range, col_range, slide_size_x, slide_size_y)
+        geom = gridlayout_geometry(layout, row_range, col_range, slide_size.x, slide_size.y)
         geom = geometry_in_span(shape, geom, layout.keepratio)
         shape_updated = set_geometry(shape, geom)
         _bind_relationships!(relationship_map, shape, shape_updated)
@@ -145,15 +154,14 @@ end
 function make_slide(
     s::Slide,
     relationship_map::Dict = slide_relationship_map(s);
-    slide_size_x::Int = inch_to_emu(13.333), # default 16:9 aspect ratio
-    slide_size_y::Int = inch_to_emu(7.5),
+    slide_size::SlideSize = SlideSize(),
 )::AbstractDict
     xml_slide = OrderedDict("p:sld" => main_attributes())
 
     spTree = init_sptree()
     next_id = 2
     for shape in shapes(s)
-        xml_nodes = _make_xml_nodes(shape, next_id, relationship_map, slide_size_x, slide_size_y)
+        xml_nodes = _make_xml_nodes(shape, next_id, relationship_map, slide_size)
         append!(spTree["p:spTree"], xml_nodes)
         next_id += length(xml_nodes)
     end

@@ -69,6 +69,7 @@ function shapes(layout::GridLayout)
 end
 
 function rid(layout::GridLayout)
+    isempty(layout._entries) && return 0
     return maximum(rid.(shapes(layout)))
 end
 

@@ -208,6 +208,15 @@
         @test pic_ext[2]["cy"] == string(PPTX.mm_to_emu(10))
     end
 
+    @testset "empty layouts do not affect RID allocation" begin
+        slide = Slide()
+        push!(slide, GridLayout(1, 1))
+
+        # An empty layout has no relationship-bearing children, so the next RID
+        # should still be the first shape RID.
+        @test PPTX.new_rid(slide) == 2
+    end
+
     @testset "nested layouts not supported" begin
         layout = GridLayout(2, 2)
         nested_layout = GridLayout(1, 1)

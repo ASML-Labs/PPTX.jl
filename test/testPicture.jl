@@ -27,6 +27,18 @@
     end
 end
 
+@testset "Picture - WebP" begin
+    for fname in ["lossy.webp", "lossless.webp", "alpha.webp", "animated.webp"]
+        path = joinpath(@__DIR__, "data", fname)
+        @test PPTX.webp_dimensions(path) == (64, 32)
+        @test PPTX.image_aspect_ratio(path) == 2.0
+        pic = Picture(path; size_x=40)
+        @test pic.size_x == 1440000
+        @test pic.size_y == 720000
+    end
+    @test isnothing(PPTX.webp_dimensions(joinpath(PPTX.ASSETS_DIR, "julia_logo.png")))
+end
+
 @testset "Picture - custom aspect ratio" begin
     logo_path = joinpath(PPTX.ASSETS_DIR,"julia_logo.svg")
     pic = Picture(logo_path; size_x=40, size_y=30)

@@ -240,13 +240,18 @@ function webp_dimensions(path::String)
     le(bytes) = foldr((b, acc) -> (acc << 8) | UInt32(b), bytes; init=UInt32(0))
     chunk = String(header[13:16])
     if chunk == "VP8X"
+        # Extended file format: animation, alpha with lossy, or metadata (ICC/EXIF/XMP).
+        # Canvas width-1 and height-1 as 24-bit little-endian.
         width = le(header[25:27]) + 1
         height = le(header[28:30]) + 1
     elseif chunk == "VP8 "
+        # Simple file format (lossy). Keyframe start code, then 14-bit width and height.
         header[24:26] == [0x9d, 0x01, 0x2a] || return nothing
         width = le(header[27:28]) & 0x3fff
         height = le(header[29:30]) & 0x3fff
     elseif chunk == "VP8L"
+        # Simple file format (lossless), may include alpha.
+        # Signature byte, then 14-bit width-1 and height-1.
         header[21] == 0x2f || return nothing
         bits = le(header[22:25])
         width = (bits & 0x3fff) + 1

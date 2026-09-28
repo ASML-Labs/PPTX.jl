@@ -218,7 +218,15 @@ function image_aspect_ratio(path::String)
         height = bottom - top
         isemf && return width / height
     end
-    
+    if endswith(lowercase(path), ".webp")
+        # avoid decoding: animated WebP crashes WebP.jl
+        dims = webp_dimensions(path)
+        if !isnothing(dims)
+            width, height = dims
+            return width / height
+        end
+    end
+
     local img
     try
         img = load(path)
@@ -231,4 +239,35 @@ function image_aspect_ratio(path::String)
     end
     height, width = size(img)
     return width / height
+end
+
+# https://developers.google.com/speed/webp/docs/riff_container
+function webp_dimensions(path::String)
+    header = open(io -> read(io, 30), path)
+    length(header) < 30 && return nothing
+    (header[1:4] == b"RIFF" && header[9:12] == b"WEBP") || return nothing
+    le(bytes) = foldr((b, acc) -> (acc << 8) | UInt32(b), bytes; init=UInt32(0))
+    chunk = String(header[13:16])
+    if chunk == "VP8X"
+        # Extended file format: animation, alpha with lossy, or metadata (ICC/EXIF/XMP).
+        # Canvas width-1 and height-1 as 24-bit little-endian.
+        width = le(header[25:27]) + 1
+        height = le(header[28:30]) + 1
+    elseif chunk == "VP8 "
+        # Simple file format (lossy). Keyframe start code, then 14-bit width and height.
+        header[24:26] == [0x9d, 0x01, 0x2a] || return nothing
+        width = le(header[27:28]) & 0x3fff
+        height = le(header[29:30]) & 0x3fff
+    elseif chunk == "VP8L"
+        # Simple file format (lossless), may include alpha.
+        # Signature byte, then 14-bit width-1 and height-1.
+        header[21] == 0x2f || return nothing
+        bits = le(header[22:25])
+        width = (bits & 0x3fff) + 1
+        height = ((bits >> 14) & 0x3fff) + 1
+    else
+        return nothing
+    end
+    (width == 0 || height == 0) && return nothing
+    return Int(width), Int(height)
 end

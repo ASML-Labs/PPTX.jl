@@ -1,3 +1,14 @@
+# used in Presentation to set all slide sizes
+struct SlideSize
+    x::Int # EMUs
+    y::Int # EMUs
+end
+
+# default slide size
+function SlideSize()
+    return SlideSize(inch_to_emu(13.333), inch_to_emu(7.5))
+end
+
 """
 ```julia
 Slide(
@@ -91,14 +102,68 @@ function Base.push!(slide::Slide, shape::AbstractShape)
     end
 end
 
-function make_slide(s::Slide, relationship_map::Dict = slide_relationship_map(s))::AbstractDict
+function Base.push!(slide::Slide, layout::GridLayout)
+    next_rid = new_rid(slide)
+    updated_entries = Tuple{AbstractShape,UnitRange{Int},UnitRange{Int}}[]
+    for (shape, row_range, col_range) in layout._entries
+        if has_rid(shape)
+            shape = set_rid(shape, next_rid)
+            next_rid += 1
+        end
+        push!(updated_entries, (shape, row_range, col_range))
+    end
+    layout._entries = updated_entries
+    return push!(shapes(slide), layout)
+end
+
+function update_relationship!(relationship_map::Dict, original_shape::AbstractShape, updated_shape::AbstractShape)
+    if has_rid(original_shape) && haskey(relationship_map, original_shape)
+        relationship_map[updated_shape] = relationship_map[original_shape]
+    end
+    return nothing
+end
+
+function make_xml_shapes(
+    shape::AbstractShape,
+    start_id::Int,
+    relationship_map::Dict,
+    slide_size::SlideSize,
+)
+    return Any[make_xml(shape, start_id, relationship_map)]
+end
+
+function make_xml_shapes(
+    layout::GridLayout,
+    start_id::Int,
+    relationship_map::Dict,
+    slide_size::SlideSize
+)
+    xml_nodes = Any[]
+    current_id = start_id
+    for (shape, row_range, col_range) in layout._entries
+        geom = gridlayout_geometry(layout, row_range, col_range, slide_size.x, slide_size.y)
+        geom = geometry_in_span(shape, geom, layout.keepratio)
+        shape_updated = set_geometry(shape, geom)
+        update_relationship!(relationship_map, shape, shape_updated)
+        push!(xml_nodes, make_xml(shape_updated, current_id, relationship_map))
+        current_id += 1
+    end
+    return xml_nodes
+end
+
+function make_slide(
+    s::Slide,
+    relationship_map::Dict = slide_relationship_map(s);
+    slide_size::SlideSize = SlideSize(),
+)::AbstractDict
     xml_slide = OrderedDict("p:sld" => main_attributes())
 
     spTree = init_sptree()
-    initial_max_id = 1
-    for (index, shape) in enumerate(shapes(s))
-        id = index + initial_max_id
-        push!(spTree["p:spTree"], make_xml(shape, id, relationship_map))
+    next_id = 2
+    for shape in shapes(s)
+        xml_shapes = make_xml_shapes(shape, next_id, relationship_map, slide_size)
+        append!(spTree["p:spTree"], xml_shapes)
+        next_id += length(xml_shapes)
     end
 
     push!(xml_slide["p:sld"], OrderedDict("p:cSld" => [spTree]))
@@ -174,16 +239,28 @@ function relationship_xml(url::AbstractString, r_id::Integer)
     )
 end
 
+get_nested_shapes(shape::AbstractShape) = (shape,)
+
+function get_nested_shapes(layout::GridLayout)
+    nested = AbstractShape[]
+    for (shape, _, _) in layout._entries
+        append!(nested, get_nested_shapes(shape))
+    end
+    return nested
+end
+
 function slide_relationship_map(s::Slide)
     d = Dict{Union{Slide, AbstractShape, AbstractString}, Int}()
     r_id = 1 # first rid is reserved by slideLayout
     for shape in shapes(s)
-        if has_rid(shape) && !haskey(d, shape)
-            r_id += 1
-            d[shape] = r_id
-        elseif has_hyperlink(shape) && !haskey(d, shape.hlink)
-            r_id += 1
-            d[shape.hlink] = r_id
+        for nested_shape in get_nested_shapes(shape)
+            if has_rid(nested_shape) && !haskey(d, nested_shape)
+                r_id += 1
+                d[nested_shape] = r_id
+            elseif has_hyperlink(nested_shape) && !haskey(d, nested_shape.hlink)
+                r_id += 1
+                d[nested_shape.hlink] = r_id
+            end
         end
     end
     return d
@@ -209,27 +286,29 @@ function make_slide_relationships(s::Slide, relationship_map::Dict = slide_relat
     )
     used_r_ids = [1]
     for shape in shapes(s)
-        r_id = 1
-        if has_rid(shape)
-            r_id = relationship_map[shape]
-            r_shape = shape
-        end
-        if has_hyperlink(shape)
-            r_id = relationship_map[shape.hlink]
-            r_shape = shape.hlink
-        end
-        if r_id ∉ used_r_ids
-            push!(xml_slide_rels["Relationships"], relationship_xml(r_shape, r_id))
-            push!(used_r_ids, r_id)
-        end
-        # For a video 2 extra relationships are defined: an extra video link and a thumbnail
-        if shape isa Video
-            r_id += 1
-            push!(xml_slide_rels["Relationships"], relationship_xml(shape, r_id; it = 1))
-            push!(used_r_ids, r_id)
-            r_id += 1
-            push!(xml_slide_rels["Relationships"], relationship_xml(picture_thumbnail(thumbnail_name(shape)), r_id))
-            push!(used_r_ids, r_id)
+        for nested_shape in get_nested_shapes(shape)
+            r_id = 1
+            if has_rid(nested_shape)
+                r_id = relationship_map[nested_shape]
+                r_shape = nested_shape
+            end
+            if has_hyperlink(nested_shape)
+                r_id = relationship_map[nested_shape.hlink]
+                r_shape = nested_shape.hlink
+            end
+            if r_id ∉ used_r_ids
+                push!(xml_slide_rels["Relationships"], relationship_xml(r_shape, r_id))
+                push!(used_r_ids, r_id)
+            end
+            # For a video 2 extra relationships are defined: an extra video link and a thumbnail
+            if nested_shape isa Video
+                r_id += 1
+                push!(xml_slide_rels["Relationships"], relationship_xml(nested_shape, r_id; it = 1))
+                push!(used_r_ids, r_id)
+                r_id += 1
+                push!(xml_slide_rels["Relationships"], relationship_xml(picture_thumbnail(thumbnail_name(nested_shape)), r_id))
+                push!(used_r_ids, r_id)
+            end
         end
     end
     return xml_slide_rels

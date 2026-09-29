@@ -4,6 +4,16 @@ const _EMUS_PER_CM = 360000
 const _EMUS_PER_MM = 36000
 const _EMUS_PER_PT = 12700
 
+mm_to_emu(::Nothing) = nothing
+mm_to_emu(x) = Int(round(x * _EMUS_PER_MM))
+mm_to_emu(x::AbstractArray{<:Real}) = mm_to_emu.(x)
+
+inch_to_emu(::Nothing) = nothing
+inch_to_emu(x::Real) = Int(round(x * _EMUS_PER_INCH))
+
+points_to_emu(::Nothing) = nothing
+points_to_emu(x::Real) = Int(round(x * _EMUS_PER_PT))
+
 const TEMPLATE_DIR = abspath(joinpath(@__DIR__, "..", "templates"))
 const ASSETS_DIR = abspath(joinpath(@__DIR__, "..", "assets"))
 const TESTDATA_DIR = abspath(joinpath(@__DIR__, "..", "test/testdata"))

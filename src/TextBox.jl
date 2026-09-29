@@ -92,6 +92,28 @@ function align_string(x)
     return s
 end
 
+anchor_string(::Nothing) = nothing
+function anchor_string(x)
+    s = string(x)
+    @assert s in ("top", "center", "middle", "bottom") "unknown anchor $s, must be top, center or bottom"
+    if s == "middle"
+        s = "center"
+    end
+    return s
+end
+
+function make_anchor_dict(anchor::String)
+    if anchor == "center"
+        return Dict("anchor" => "ctr")
+    elseif anchor == "bottom"
+        return Dict("anchor" => "b")
+    elseif anchor == "top"
+        return Dict("anchor" => "t")
+    else
+        error("unknown anchor \"$anchor\"")
+    end
+end
+
 TextStyle(style::TextStyle) = style
 
 function TextStyle(style::AbstractDict{String})
@@ -148,6 +170,15 @@ struct Margins
     bottom::Union{Nothing, Int}
 end
 
+function Base.:(==)(m1::Margins, m2::Margins)
+    return m1.left == m2.left && m1.right == m2.right && m1.top == m2.top && m1.bottom == m2.bottom
+end
+
+function Margins(m::Real)
+    mar = margin(m)
+    return Margins(mar, mar, mar, mar)
+end
+
 function Margins(;
     left = nothing,
     right = nothing,
@@ -172,6 +203,7 @@ Base.@kwdef struct TextBody
     style::TextStyle = TextStyle()
     margins::Margins = Margins()
     wrap::Bool = false
+    anchor::Union{Nothing, String} = nothing
     body_properties::Union{Nothing, AbstractVector} = default_body_properties()
 end
 
@@ -245,6 +277,7 @@ function TextBox(;
     textstyle = (italic = false, bold = false, fontsize = nothing),
     margins = nothing, # e.g. (left=0.1, right=0.1, bottom=0.1, top=0.1) in millimeters
     wrap = false, # wrap text in shape or not
+    anchor = nothing, # "top", "center" or "bottom"
 )
 ```
 
@@ -296,6 +329,32 @@ struct TextBox<: AbstractShape
     linewidth::Union{Nothing, Int}
     rotation::Union{Nothing, Float64}
     function TextBox(
+        content::TextBody,
+        offset_x::Int,
+        offset_y::Int,
+        size_x::Int,
+        size_y::Int,
+        hlink::Union{Nothing, Any} = nothing,
+        color::Union{Nothing, String} = nothing,
+        linecolor::Union{Nothing, String} = nothing,
+        linewidth::Union{Nothing, Int} = nothing,
+        rotation::Union{Nothing, Float64} = nothing,
+    )
+        return new(
+            content,
+            offset_x,
+            offset_y,
+            size_x,
+            size_y,
+            hlink,
+            color,
+            linecolor,
+            linewidth,
+            rotation,
+        )
+    end
+
+    function TextBox(
         content::AbstractString,
         offset_x::Real, # millimeters
         offset_y::Real, # millimeters
@@ -309,6 +368,7 @@ struct TextBox<: AbstractShape
         rotation::Union{Nothing, Real} = nothing,
         margins = Margins(),
         wrap = false,
+        anchor = nothing,
     )
         # input is in mm
         return new(
@@ -317,6 +377,7 @@ struct TextBox<: AbstractShape
                 TextStyle(style),
                 Margins(margins),
                 wrap,
+                anchor_string(anchor),
                 default_body_properties()
             ),
             mm_to_emu(offset_x),
@@ -332,12 +393,20 @@ struct TextBox<: AbstractShape
     end
 end
 
-mm_to_emu(::Nothing) = nothing
-mm_to_emu(x) = Int(round(x * _EMUS_PER_MM))
-mm_to_emu(x::AbstractArray{<:Real}) = mm_to_emu.(x)
-
-points_to_emu(x::Nothing) = nothing
-points_to_emu(x::Real) = Int(round(x * 12700))
+function set_geometry(t::TextBox, geom::Geometry)
+    return TextBox(
+        t.content,
+        geom.offset_x,
+        geom.offset_y,
+        geom.size_x,
+        geom.size_y,
+        t.hlink,
+        t.color,
+        t.linecolor,
+        t.linewidth,
+        t.rotation,
+    )
+end
 
 rotation_value(::Nothing) = nothing
 function rotation_value(x::Real)
@@ -345,8 +414,9 @@ function rotation_value(x::Real)
 end
 
 # keyword argument constructor
-function TextBox(;
-    content::AbstractString="",
+function TextBox(
+    text::AbstractString="";
+    content::AbstractString=text,
     offset=(50,50),
     offset_x::Real=offset[1], # millimeters
     offset_y::Real=offset[2], # millimeters
@@ -363,6 +433,7 @@ function TextBox(;
     rotation::Union{Nothing, Real}=nothing,
     margins=Margins(),
     wrap=false,
+    anchor=nothing,
 )
     return TextBox(
         content,
@@ -378,10 +449,9 @@ function TextBox(;
         rotation,
         margins,
         wrap,
+        anchor,
     )
 end
-
-TextBox(content::String; kwargs...) = TextBox(;content=content, kwargs...)
 
 function _show_string(p::TextBox, compact::Bool)
     show_string = "TextBox"
@@ -536,6 +606,9 @@ function make_textbody_xml(t::TextBody, txBodyNameSpace="p")
     end
     if has_margins(t)
         append!(bodyPr, make_body_properties_xml(t.margins))
+    end
+    if !isnothing(t.anchor)
+        push!(bodyPr, make_anchor_dict(t.anchor))
     end
 
     txBody = Dict(

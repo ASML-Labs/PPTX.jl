@@ -19,6 +19,7 @@ makedocs(;
     pages=[
         "Home" => "index.md",
         "Table Styling" => "tablestyle.md",
+        "GridLayout" => "layout.md",
         "Plots" => "plots.md",
         "API Reference" => "api.md",
     ],

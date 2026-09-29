@@ -97,8 +97,17 @@ end
 function set_rid(s::Picture, i::Int)
     return Picture(s.source, s.offset_x, s.offset_y, s.size_x, s.size_y, i)
 end
+
 rid(s::Picture) = s.rid
 has_rid(s::Picture) = true
+
+function set_geometry(s::Picture, geom::Geometry)
+    return Picture(s.source, geom.offset_x, geom.offset_y, geom.size_x, geom.size_y, s.rid, s._uuid)
+end
+
+function geometry_in_span(s::Picture, geom::Geometry, keepratio::Bool)
+    geometry_in_span(get_geometry(s), geom, keepratio)
+end
 
 function _show_string(p::Picture, compact::Bool)
     show_string = "Picture"

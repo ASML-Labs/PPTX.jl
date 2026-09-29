@@ -50,4 +50,14 @@
         @test b.content.margins.right == 36000
         @test b.content.margins.top === nothing
         @test b.content.margins.bottom === nothing
+
+        b = TextBox("bla", anchor = :center)
+        @test b.content.anchor == "center"
+        b = TextBox("bla", anchor = :middle)
+        @test b.content.anchor == "center"
+        b = TextBox("bla", anchor = "bottom")
+        @test b.content.anchor == "bottom"
+        b = TextBox("bla")
+        @test b.content.anchor === nothing
+        @test_throws AssertionError TextBox("bla", anchor = "banana")
     end

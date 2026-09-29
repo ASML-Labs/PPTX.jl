@@ -1,12 +1,7 @@
-struct PresentationSize
-    x::Int # EMUs
-    y::Int # EMUs
-end
-
 # presentation properties that are not for the user
 # these may be gathered from the .pptx template upon writing
 Base.@kwdef mutable struct PresentationState
-    size::Union{Nothing, PresentationSize} = nothing
+    size::Union{Nothing, SlideSize} = nothing
 end
 
 """
@@ -70,6 +65,12 @@ function Base.push!(pres::Presentation, slide::Slide)
     slide.rid = new_rid(pres)
     slide.slide_nr = length(slides(pres)) + 1
     return push!(slides(pres), slide)
+end
+
+function slide_size(p::Presentation)
+    p_sz = p._state.size
+    sz = isnothing(p_sz) ? SlideSize() : p_sz
+    return sz
 end
 
 # default show used by Array show
@@ -182,7 +183,7 @@ function update_presentation_state!(p::Presentation, template::ZipBufferReader)
     r = root(doc)
     n = findfirst("//p:sldSz", r)
     cx, cy = n["cx"], n["cy"]
-    sz = PresentationSize(parse(Int, cx), parse(Int, cy))
+    sz = SlideSize(parse(Int, cx), parse(Int, cy))
     p._state.size = sz
     return nothing
 end

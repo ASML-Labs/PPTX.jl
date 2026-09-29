@@ -55,20 +55,27 @@ function write_slides!(w::ZipWriter, p::Presentation, template::ZipBufferReader)
         error("input template pptx already contains slides, please use an empty template")
     end
     layoutmap = get_layoutnamemap(template)
+    sz = slide_size(p)
     for (idx, slide) in enumerate(slides(p))
         layoutnametoint!(slide, layoutmap)
-        xml = make_slide(slide)
+
+        # write slide
+        xml = make_slide(slide; slide_size = sz)
         doc::EzXML.Document = xml_document(xml)
         add_title_shape!(doc, slide, template)
-        zip_newfile(w, "ppt/slides/slide$idx.xml"; compress=true)
-        print(w, doc)
-        zip_commitfile(w)
+        zip_write_doc(w, doc, "ppt/slides/slide$idx.xml")
+
+        # write slide relationships
         xml = make_slide_relationships(slide)
         doc = xml_document(xml)
-        zip_newfile(w, "ppt/slides/_rels/slide$idx.xml.rels"; compress=true)
-        print(w, doc)
-        zip_commitfile(w)
+        zip_write_doc(w, doc, "ppt/slides/_rels/slide$idx.xml.rels")
     end
+end
+
+function zip_write_doc(w::ZipWriter, doc::EzXML.Document, path::String)
+    zip_newfile(w, path; compress=true)
+    print(w, doc)
+    zip_commitfile(w)
 end
 
 function add_title_shape!(doc::EzXML.Document, slide::Slide, template::ZipBufferReader)
@@ -87,12 +94,14 @@ function add_title_shape!(doc::EzXML.Document, slide::Slide, template::ZipBuffer
     nothing
 end
 
+# default do nothing
+copy_shape(w::ZipWriter, shape::AbstractShape) = nothing
+
+# some shapes, like Pictures, are media files that need to be copied/written into the pptx
 function write_shapes!(w::ZipWriter, pres::Presentation)
     for slide in slides(pres)
         for shape in shapes(slide)
-            if typeof(shape) ∈ [Picture, Video]
-                copy_shape(w::ZipWriter, shape)
-            end
+            copy_shape(w, shape)
         end
     end
 end

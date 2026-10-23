@@ -87,7 +87,7 @@ function new_rid(slide::Slide)
     # When there is no rid shapes the new rid should be 2
     if isempty(slide.shapes)
         return 2
-    else # default 2, or it should be the at least 1 bigger than the shape with the higest rid
+    else # default 2, or it should be at least 1 bigger than the shape with the highest rid
         return max(2, maximum(rid.(shapes(slide))) + 1)
     end
 end

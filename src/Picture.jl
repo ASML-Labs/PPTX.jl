@@ -9,7 +9,7 @@ Picture(source::String; top::Int=0, left::Int=0, size::Int = 40)
 * `top::Int` mm from the top
 * `left::Int` mm from the left
 
-Internally the sizes are converted EMUs.
+Internally the sizes are converted to EMUs.
 
 # Examples
 ```julia

@@ -101,81 +101,52 @@ function _show_string(p::Presentation, compact::Bool)
     return show_string
 end
 
-function make_relationships(p::Presentation)::AbstractDict
-    ids = ["rId1", "rId2", "rId3", "rId4", "rId5"]
-    relationship_tag_begin = "http://schemas.openxmlformats.org/officeDocument/2006/relationships/"
-    types = ["slideMaster", "theme", "presProps", "viewProps", "tableStyles"]
-    types = relationship_tag_begin .* types
-    targets = [
-        "slideMasters/slideMaster1.xml",
-        "theme/theme1.xml",
-        "presProps.xml",
-        "viewProps.xml",
-        "tableStyles.xml",
-    ]
-    relationships = OrderedDict(
-        "Relationships" => Dict[OrderedDict(
-            "xmlns" => "http://schemas.openxmlformats.org/package/2006/relationships"
-        )],
-    )
-    for (id, type, target) in Base.zip(ids, types, targets)
-        push!(
-            relationships["Relationships"],
-            OrderedDict(
-                "Relationship" =>
-                    OrderedDict("Id" => id, "Type" => type, "Target" => target),
-            ),
-        )
+function append_slide_relationships!(doc::EzXML.Document, p::Presentation)
+    rels = root(doc)
+    for node in collect(elements(rels))
+        haskey(node, "Type") && endswith(node["Type"], "/slide") && unlink!(node)
     end
-
-    for (slide_idx, slide) in enumerate(slides(p))
-        slide_rel = OrderedDict(
-            "Relationship" => OrderedDict(
-                "Id" => "rId$(slide.rid)",
-                "Type" => "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide",
-                "Target" => "slides/slide$slide_idx.xml",
-            ),
-        )
-        push!(relationships["Relationships"], slide_rel)
+    existing = Set(node["Id"] for node in elements(rels))
+    next_id = 1
+    for slide in slides(p)
+        while "rId$next_id" in existing
+            next_id += 1
+        end
+        slide.rid = next_id
+        rid = "rId$next_id"
+        push!(existing, rid)
+        rel = ElementNode("Relationship")
+        link_node!(rel, "Id" => rid)
+        link_node!(rel, "Type" => "http://schemas.openxmlformats.org/officeDocument/2006/relationships/slide")
+        link_node!(rel, "Target" => "slides/$(slide_fname(slide))")
+        link!(rels, rel)
+        next_id += 1
     end
-    return relationships
+    doc
 end
 
-function make_presentation(p::Presentation)
-    xml_pres = OrderedDict("p:presentation" => main_attributes())
-    push!(xml_pres["p:presentation"], OrderedDict("saveSubsetFonts" => "1"))
-
-    push!(
-        xml_pres["p:presentation"],
-        OrderedDict(
-            "p:sldMasterIdLst" => OrderedDict(
-                "p:sldMasterId" => OrderedDict("id" => "2147483648", "r:id" => "rId1")
-            ),
-        ),
-    )
-
-    slide_id_list = Dict[]
-    for (idx, slide) in enumerate(slides(p))
-        push!(
-            slide_id_list,
-            OrderedDict(
-                "p:sldId" => OrderedDict("id" => "$(idx+255)", "r:id" => "rId$(slide.rid)")
-            ),
-        )
+function append_slides_to_presentation!(doc::EzXML.Document, p::Presentation)
+    pres = root(doc)
+    slide_list = findfirst("//*[local-name()='sldIdLst']", pres)
+    if isnothing(slide_list)
+        slide_size = findfirst("//*[local-name()='sldSz']", pres)
+        isnothing(slide_size) && error("template presentation is missing p:sldSz")
+        slide_list = ElementNode("p:sldIdLst")
+        linkprev!(slide_size, slide_list)
+    else
+        for node in collect(elements(slide_list))
+            unlink!(node)
+        end
     end
-
-    push!(xml_pres["p:presentation"], OrderedDict("p:sldIdLst" => slide_id_list))
-
-    sldSz = p._state.size
-    push!(
-        xml_pres["p:presentation"],
-        OrderedDict("p:sldSz" => OrderedDict("cx" => "$(sldSz.x)", "cy" => "$(sldSz.y)")),
-    )
-    push!(
-        xml_pres["p:presentation"],
-        OrderedDict("p:notesSz" => OrderedDict("cx" => "6858000", "cy" => "9144000")),
-    )
-    return xml_pres
+    next_id = 256
+    for slide in slides(p)
+        slide_id = ElementNode("p:sldId")
+        link_node!(slide_id, "id" => string(next_id))
+        link_node!(slide_id, "r:id" => "rId$(slide.rid)")
+        link!(slide_list, slide_id)
+        next_id += 1
+    end
+    doc
 end
 
 function update_presentation_state!(p::Presentation, template::ZipBufferReader)

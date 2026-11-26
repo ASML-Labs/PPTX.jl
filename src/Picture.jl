@@ -158,6 +158,9 @@ end
 
 function filename(p::Picture)
     source_filename, extension = splitext(splitpath(p.source)[end])
+    # `#` is a URI fragment delimiter in relationship targets, so do not let it
+    # enter the package part name used by those targets.
+    source_filename = replace(source_filename, "#" => "_")
     return "$(source_filename)$(p._uuid)$extension"
 end
 

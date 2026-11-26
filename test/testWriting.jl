@@ -45,7 +45,6 @@ end
 end
 
 # TODO: also support .potx next to empty .pptx
-# TODO: what if the .pptx template already has slides?
 @testset "custom template" begin
     dark_template_name = "no-slides-dark.pptx"
     dark_template_path = joinpath(PPTX.TEMPLATE_DIR, dark_template_name)
@@ -126,4 +125,15 @@ end
 
         @test isfile(pptx_path)
     end
+end
+
+@testset "multiple slide masters" begin
+    s1 = Slide(; title="My First Slide", layout="Title and Content")
+    pres = Presentation([s1])
+    one_master_template_path = joinpath(PPTX.TEMPLATE_DIR, "one-master.pptx")
+    write("test.pptx", pres, template_path=one_master_template_path)
+    @test write_and_remove("test.pptx", pres)
+    two_masters_template_path = joinpath(PPTX.TEMPLATE_DIR, "two-masters.pptx")
+    write("test.pptx", pres, template_path=two_masters_template_path)
+    @test write_and_remove("test.pptx", pres)
 end

@@ -1,16 +1,16 @@
 import DefaultApplication
 
-function write_presentation!(w::ZipWriter, p::Presentation)
-    xml = make_presentation(p)
-    doc = xml_document(xml)
+function write_presentation!(w::ZipWriter, p::Presentation, template::ZipBufferReader)
+    doc = EzXML.parsexml(zip_readentry(template, "ppt/presentation.xml"))
+    append_slides_to_presentation!(doc, p)
     zip_newfile(w, "ppt/presentation.xml"; compress=true)
     print(w, doc)
     zip_commitfile(w)
 end
 
-function write_relationships!(w::ZipWriter, p::Presentation)
-    xml = make_relationships(p)
-    doc = xml_document(xml)
+function write_relationships!(w::ZipWriter, p::Presentation, template::ZipBufferReader)
+    doc = EzXML.parsexml(zip_readentry(template, "ppt/_rels/presentation.xml.rels"))
+    append_slide_relationships!(doc, p)
     zip_newfile(w, "ppt/_rels/presentation.xml.rels"; compress=true)
     print(w, doc)
     zip_commitfile(w)
@@ -25,17 +25,20 @@ function get_layoutnamemap(template::ZipBufferReader)
         doc = EzXML.parsexml(zip_readentry(template, name))
         r = root(doc)
         n = findfirst("//p:cSld", r)
-        push!(layoutnamemap, n["name"] => id)
+        # Layout names are not required to be unique across masters. Keep the
+        # first name mapping while retaining numeric access to every layout.
+        get!(layoutnamemap, n["name"], id)
     end
     layoutnamemap
 end
 
-function layoutnametoint!(slide, layoutmap)
+function layoutnametoint!(slide, layoutmap, template::ZipBufferReader)
     if isa(slide.layout, String)
         haskey(layoutmap, slide.layout) || error("Slide layout name $(slide.layout) not defined in the template")
         slide.layout = layoutmap[slide.layout]
     else
-        slide.layout in values(layoutmap) || error("Slide layout number $(slide.layout) not defined in the template")
+        layout_path = "ppt/slideLayouts/slideLayout$(slide.layout).xml"
+        layout_path in zip_names(template) || error("Slide layout number $(slide.layout) not defined in the template")
     end
 end
 
@@ -51,24 +54,22 @@ function list_layoutnames(template_path = DEFAULT_TEMPLATE_DATA)
 end
 
 function write_slides!(w::ZipWriter, p::Presentation, template::ZipBufferReader)
-    if zip_isdir(template, "ppt/slides")
-        error("input template pptx already contains slides, please use an empty template")
-    end
     layoutmap = get_layoutnamemap(template)
     sz = slide_size(p)
-    for (idx, slide) in enumerate(slides(p))
-        layoutnametoint!(slide, layoutmap)
+    for slide in slides(p)
+        layoutnametoint!(slide, layoutmap, template)
 
         # write slide
         xml = make_slide(slide; slide_size = sz)
         doc::EzXML.Document = xml_document(xml)
         add_title_shape!(doc, slide, template)
-        zip_write_doc(w, doc, "ppt/slides/slide$idx.xml")
+        slide_name = slide_fname(slide)
+        zip_write_doc(w, doc, "ppt/slides/$slide_name")
 
         # write slide relationships
         xml = make_slide_relationships(slide)
         doc = xml_document(xml)
-        zip_write_doc(w, doc, "ppt/slides/_rels/slide$idx.xml.rels")
+        zip_write_doc(w, doc, "ppt/slides/_rels/$slide_name.rels")
     end
 end
 
@@ -145,6 +146,12 @@ function add_contenttypes!(w::ZipWriter, template::ZipBufferReader, pres::Presen
         slide_ct = "application/vnd.openxmlformats-officedocument.presentationml.slide+xml"
         addelement!(r, "Override PartName=\"$slide_path\" ContentType=\"$slide_ct\"")
     end
+    for node in collect(elements(r))
+        if node.name == "Override" && occursin(r"^/ppt/slides/slide\d+\.xml$", node["PartName"])
+            keep = any(slide -> node["PartName"] == "/ppt/slides/$(slide_fname(slide))", pres.slides)
+            keep || unlink!(node)
+        end
+    end
     zip_newfile(w, path; compress=true)
     prettyprint(w, doc)
     zip_commitfile(w)
@@ -178,7 +185,7 @@ Base.write(
 * `pres::Presentation` Presentation object to write.
 * `overwrite = false` argument for overwriting existing file.
 * `open_ppt = true` open powerpoint after it is written.
-* `template_path::String` path to an (empty) pptx that serves as template.
+* `template_path::String` path to a pptx whose masters, layouts, theme, and styling serve as the template. Existing slides in the template are omitted.
 
 # Examples
 ```
@@ -225,8 +232,8 @@ function Base.write(
         ZipWriter(temp_out; own_io=true) do w
             update_presentation_state!(p, template_reader)
             update_slide_nrs!(p)
-            write_relationships!(w, p)
-            write_presentation!(w, p)
+            write_relationships!(w, p, template_reader)
+            write_presentation!(w, p, template_reader)
             write_slides!(w, p, template_reader)
             write_shapes!(w, p)
             update_table_style!(w, template_reader)
@@ -236,6 +243,9 @@ function Base.write(
             for i in zip_nentries(template_reader):-1:1
                 local name = zip_name(template_reader, i)
                 if !endswith(name,"/")
+                    # Template slides are intentionally omitted; the output starts with
+                    # the slides in `p` while retaining the template's masters/layouts.
+                    occursin(r"^ppt/slides/(?:_rels/)?slide\d+\.xml(?:\.rels)?$", name) && continue
                     if !zip_name_collision(w, name)
                         local compress = zip_iscompressed(template_reader, i)
                         zip_data = zip_readentry(template_reader, i)
